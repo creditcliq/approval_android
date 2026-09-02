@@ -141,7 +141,6 @@ fun WelcomeScreen(
             )
 
             Spacer(modifier = Modifier.height(20.dp))
-            //TODO() update this to the icon
             PoweredByCreditChek()
             Spacer(modifier = Modifier.height(16.dp))
         }

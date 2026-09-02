@@ -217,7 +217,6 @@ fun ApprovalFlowNavigator(
                 onDismiss = { onFinishWithResult(SessionResult.Cancelled) },
                 isLoading = isIntroLoading,
                 onProceed = {
-                    //TODO(): call the health endpoint
                     coroutineScope.launch {
                         isIntroLoading = true
                         val healthResult = repository.checkLivelinessHealth()
