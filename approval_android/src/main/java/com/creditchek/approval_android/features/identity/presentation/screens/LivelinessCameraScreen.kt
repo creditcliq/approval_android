@@ -25,6 +25,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import com.creditchek.approval_android.core.Engines.ApprovalTtsEngine
+import com.creditchek.approval_android.core.Engines.LivelinessCameraEngine
+import com.creditchek.approval_android.core.Engines.LivelinessState
 import com.creditchek.approval_android.core.network.NetworkQuality
 import com.creditchek.approval_android.core.shared.components.PoweredByCreditChek
 import com.creditchek.approval_android.core.theme.*
@@ -41,11 +44,19 @@ fun LivelinessCameraScreen(
     onStepCapture: (suspend (FaceChallengeCapture) -> Result<ValidationData>)? = null,
     onVerificationComplete: (Boolean) -> Unit = {}
 ) {
+
+    val context = LocalContext.current
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     val coroutineScope = rememberCoroutineScope()
 
     var hasCameraPermission by remember { mutableStateOf(false) }
     var livenessState by remember { mutableStateOf(LivelinessState()) }
+
+    // 👈 1. Native Audio Guidance Engine
+    val ttsEngine = remember {
+        ApprovalTtsEngine(context)
+    }
+
 
     val engine = remember {
         LivelinessCameraEngine(
@@ -60,6 +71,7 @@ fun LivelinessCameraScreen(
     DisposableEffect(Unit) {
         onDispose {
             engine.release()
+            ttsEngine.release()
         }
     }
 
@@ -73,11 +85,20 @@ fun LivelinessCameraScreen(
         permissionLauncher.launch(Manifest.permission.CAMERA)
     }
 
+    // 👈 2. Voice Prompts triggered on step/guidance change
+    LaunchedEffect(livenessState.guidance, livenessState.isFaceAligned) {
+        if (livenessState.isFaceAligned) {
+            ttsEngine.speak(livenessState.guidance)
+        }
+    }
+
     LaunchedEffect(livenessState.isVerificationComplete) {
         if (livenessState.isVerificationComplete) {
             onVerificationComplete(livenessState.serverVerificationPassed)
         }
     }
+
+
 
     Column(
         modifier = Modifier

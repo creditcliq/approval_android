@@ -1,7 +1,8 @@
-package com.creditchek.approval_android.features.identity.presentation.screens
+package com.creditchek.approval_android.core.Engines
 
 import android.content.Context
 import android.util.Log
+import androidx.annotation.OptIn
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
@@ -132,7 +133,7 @@ class LivelinessCameraEngine(
         }, ContextCompat.getMainExecutor(context))
     }
 
-    @androidx.annotation.OptIn(ExperimentalGetImage::class)
+    @OptIn(ExperimentalGetImage::class)
     private fun processFrame(imageProxy: ImageProxy) {
         val mediaImage = imageProxy.image
         if (mediaImage == null || isEvaluatingStep) {
