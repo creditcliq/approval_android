@@ -22,7 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.creditchek.approval_android.core.network.NetworkQualityStatus
+import com.creditchek.approval_android.core.network.NetworkQuality
 import com.creditchek.approval_android.core.theme.ApprovalCanvas
 import com.creditchek.approval_android.core.theme.ApprovalDanger
 import com.creditchek.approval_android.core.theme.ApprovalSuccess
@@ -31,13 +31,12 @@ import com.creditchek.approval_android.core.theme.ApprovalWarning
 @Composable
 fun NetworkStatusPill(
     modifier: Modifier = Modifier,
-    quality: NetworkQualityStatus = NetworkQualityStatus.EXCELLENT
+    quality: NetworkQuality = NetworkQuality.EXCELLENT
 ) {
     val (statusText, statusColor) = when (quality) {
-        NetworkQualityStatus.EXCELLENT -> "Excellent network" to ApprovalSuccess
-        NetworkQualityStatus.MODERATE -> "Moderate network" to ApprovalWarning
-        NetworkQualityStatus.UNSTABLE -> "Unstable network" to ApprovalWarning
-        NetworkQualityStatus.OFFLINE -> "You are offline" to ApprovalDanger
+        NetworkQuality.EXCELLENT -> "Excellent network" to ApprovalSuccess
+        NetworkQuality.MODERATE -> "Moderate network" to ApprovalWarning
+        NetworkQuality.UNSTABLE -> "Unstable network" to ApprovalWarning
     }
 
     Surface(

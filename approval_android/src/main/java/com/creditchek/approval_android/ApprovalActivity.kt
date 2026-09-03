@@ -8,11 +8,15 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
+import com.creditchek.approval_android.core.network.NetworkQualityEstimator
 import com.creditchek.approval_android.core.session.ApprovalConfig
 import com.creditchek.approval_android.core.session.SessionResult
 import com.creditchek.approval_android.core.shared.components.IdentityToastHost
@@ -241,7 +245,19 @@ fun ApprovalFlowNavigator(
         // 5. CameraX + ML Kit Liveness Screen
         ApprovalStep.LIVELINESS -> {
             var finalVerificationPassed by remember { mutableStateOf(false) }
+
+            val context = LocalContext.current
+            val networkEstimator = remember { NetworkQualityEstimator(context) }
+            val networkQuality by networkEstimator.quality.collectAsState()
+
+            DisposableEffect(Unit) {
+                networkEstimator.startMonitoring()
+                onDispose { networkEstimator.stopMonitoring() }
+            }
+
+
             LivelinessCameraScreen(
+                networkQuality = networkQuality,
                 onDismiss = { currentStep = ApprovalStep.PHOTO_INTRO },
                 onStepCapture = { capture ->
                     repository.verifyChallenge(

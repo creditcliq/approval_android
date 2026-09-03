@@ -19,14 +19,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import com.creditchek.approval_android.core.network.NetworkQualityStatus
+import com.creditchek.approval_android.core.network.NetworkQuality
+import com.creditchek.approval_android.core.shared.components.PoweredByCreditChek
 import com.creditchek.approval_android.core.theme.*
 import com.creditchek.approval_android.features.identity.data.models.FaceChallengeCapture
 import com.creditchek.approval_android.features.identity.data.models.ValidationData
@@ -36,12 +36,12 @@ import com.creditchek.approval_android.features.identity.presentation.components
 
 @Composable
 fun LivelinessCameraScreen(
+    networkQuality: NetworkQuality = NetworkQuality.MODERATE,
     onDismiss: () -> Unit = {},
     onStepCapture: (suspend (FaceChallengeCapture) -> Result<ValidationData>)? = null,
     onVerificationComplete: (Boolean) -> Unit = {}
 ) {
-    val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     val coroutineScope = rememberCoroutineScope()
 
     var hasCameraPermission by remember { mutableStateOf(false) }
@@ -97,7 +97,7 @@ fun LivelinessCameraScreen(
                 .padding(horizontal = 20.dp, vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            NetworkStatusPill(quality = NetworkQualityStatus.EXCELLENT)
+            NetworkStatusPill(quality = networkQuality)
 
             Spacer(modifier = Modifier.height(20.dp))
 
@@ -153,7 +153,7 @@ fun LivelinessCameraScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.size(50.dp))
 
             // 3. Low Light / Distance / Eye Contact Banner
             if (livenessState.isLowLight) {
@@ -181,6 +181,10 @@ fun LivelinessCameraScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 8.dp)
             )
+
+            Spacer(modifier = Modifier.weight(0.5f))
+
+            PoweredByCreditChek()
 
             Spacer(modifier = Modifier.height(24.dp))
         }

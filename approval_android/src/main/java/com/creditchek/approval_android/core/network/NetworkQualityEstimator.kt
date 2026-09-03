@@ -1,80 +1,116 @@
 package com.creditchek.approval_android.core.network
 
+import android.Manifest
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
+import android.os.Build
+import androidx.annotation.RequiresPermission
+import androidx.compose.ui.graphics.Color
+import com.creditchek.approval_android.core.theme.ApprovalDanger
+import com.creditchek.approval_android.core.theme.ApprovalSuccess
+import com.creditchek.approval_android.core.theme.ApprovalWarning
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlin.math.roundToInt
 
-enum class NetworkQualityStatus {
-    EXCELLENT, MODERATE, UNSTABLE, OFFLINE
+enum class NetworkQuality(val label: String, val color: Color) {
+    EXCELLENT("Excellent", ApprovalSuccess),
+    MODERATE("Moderate", ApprovalWarning),
+    UNSTABLE(
+        "Unstable", ApprovalDanger
+    );
+
+    companion object {
+        /**
+         * Categorizes network based on hardware link bandwidth in Kbps
+         */
+        fun fromBandwidthKbps(downstreamKbps: Int): NetworkQuality = when {
+            downstreamKbps >= 10_000 -> EXCELLENT // >=10 Mbps (5G, High-speed Wi-Fi)
+            downstreamKbps >= 1_500 -> MODERATE // 1.5 - 10 Mbps (4G LTE)
+            else                     -> UNSTABLE      // < 1.5 Mbps (3G, 2G, slow network)
+        }
+    }
 }
 
-class NetworkQualityEstimator(private val windowSize: Int = 5) {
-    private val latencies = mutableListOf<Long>()
 
-    var quality: NetworkQualityStatus = NetworkQualityStatus.MODERATE
-        private set
 
-    private var hasSuccessfulSample = false
-    private var consecutiveFailures = 0
-
-    val effectiveLatencyMilliseconds: Long?
-        get() {
-            if (latencies.isEmpty()) return null
-
-            val sorted = latencies.sorted()
-            val middleIndex = sorted.size / 2
-            return if (sorted.size % 2 == 1) {
-                sorted[middleIndex]
-            } else {
-                ((sorted[middleIndex - 1] + sorted[middleIndex]) / 2.0).roundToInt().toLong()
-            }
-        }
-
-    fun recordLatency(latencyMs: Long): NetworkQualityStatus {
-        consecutiveFailures = 0
-        latencies.add(latencyMs)
-        if (latencies.size > windowSize) {
-            latencies.removeAt(0)
-        }
-        val effectiveLatency = effectiveLatencyMilliseconds ?: return quality
-        if (!hasSuccessfulSample || quality == NetworkQualityStatus.OFFLINE) {
-            quality = classifyBaseline(effectiveLatency)
-            hasSuccessfulSample = true
-            return quality
-        }
-        quality = when (quality) {
-            NetworkQualityStatus.EXCELLENT -> when {
-                effectiveLatency >= 1400 -> NetworkQualityStatus.UNSTABLE
-                effectiveLatency >= 650 -> NetworkQualityStatus.MODERATE
-                else -> NetworkQualityStatus.EXCELLENT
-            }
-            NetworkQualityStatus.MODERATE -> when {
-                effectiveLatency <= 450 -> NetworkQualityStatus.EXCELLENT
-                effectiveLatency >= 1400 -> NetworkQualityStatus.UNSTABLE
-                else -> NetworkQualityStatus.MODERATE
-            }
-            NetworkQualityStatus.UNSTABLE -> when {
-                effectiveLatency <= 450 -> NetworkQualityStatus.EXCELLENT
-                effectiveLatency <= 1000 -> NetworkQualityStatus.MODERATE
-                else -> NetworkQualityStatus.UNSTABLE
-            }
-            NetworkQualityStatus.OFFLINE -> classifyBaseline(effectiveLatency)
-        }
-        return quality
+/**
+ * 100% Local Hardware-Based Network Quality Monitor.
+ * Zero HTTP pings, zero server costs, zero battery drain.
+ */
+class NetworkQualityEstimator(context: Context) {
+    private val connectivityManager =
+        context.applicationContext.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
+    private val _quality = MutableStateFlow(NetworkQuality.EXCELLENT)
+    val quality: StateFlow<NetworkQuality> = _quality.asStateFlow()
+    private var networkCallback: ConnectivityManager.NetworkCallback? = null
+    init {
+        // Initial snapshot evaluation on startup
+        evaluateCurrentNetwork()
     }
-    fun recordFailure(): NetworkQualityStatus {
-        consecutiveFailures++
-        quality = if (consecutiveFailures >= 2) {
-            NetworkQualityStatus.OFFLINE
-        } else {
-            NetworkQualityStatus.UNSTABLE
+    /**
+     * Registers an OS kernel event listener for network speed/capability changes.
+     */
+    @RequiresPermission(Manifest.permission.ACCESS_NETWORK_STATE)
+    fun startMonitoring() {
+        if (networkCallback != null || connectivityManager == null) return
+        val callback = object : ConnectivityManager.NetworkCallback() {
+            override fun onCapabilitiesChanged(
+                network: Network,
+                capabilities: NetworkCapabilities
+            ) {
+                val hasInternet = capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                val isValidated =
+                    capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+                if (!hasInternet || !isValidated) {
+                    _quality.value = NetworkQuality.UNSTABLE
+                    return
+                }
+                // Downstream bandwidth provided directly by the Android radio hardware
+                val downstreamKbps = capabilities.linkDownstreamBandwidthKbps
+                _quality.value = NetworkQuality.fromBandwidthKbps(downstreamKbps)
+            }
+            override fun onLost(network: Network) {
+                _quality.value = NetworkQuality.UNSTABLE
+            }
+            override fun onAvailable(network: Network) {
+                evaluateCurrentNetwork()
+            }
         }
-        return quality
-    }
-    private fun classifyBaseline(latencyMs: Long): NetworkQualityStatus {
-        return when {
-            latencyMs <= 500 -> NetworkQualityStatus.EXCELLENT
-            latencyMs <= 1200 -> NetworkQualityStatus.MODERATE
-            else -> NetworkQualityStatus.UNSTABLE
+        networkCallback = callback
+        try {
+            connectivityManager.registerDefaultNetworkCallback(callback)
+        } catch (e: Exception) {
+            evaluateCurrentNetwork()
         }
     }
-
+    /**
+     * Evaluates current network capabilities without waiting for an event.
+     */
+    @RequiresPermission(Manifest.permission.ACCESS_NETWORK_STATE)
+    private fun evaluateCurrentNetwork() {
+        val manager = connectivityManager ?: return
+        val activeNetwork = manager.activeNetwork
+        val capabilities = manager.getNetworkCapabilities(activeNetwork)
+        if (capabilities == null || !capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)) {
+            _quality.value = NetworkQuality.UNSTABLE
+            return
+        }
+        val downstreamKbps = capabilities.linkDownstreamBandwidthKbps
+        _quality.value = NetworkQuality.fromBandwidthKbps(downstreamKbps)
+    }
+    /**
+     * Unregisters the OS listener when leaving the camera screen.
+     */
+    fun stopMonitoring() {
+        networkCallback?.let { callback ->
+            try {
+                connectivityManager?.unregisterNetworkCallback(callback)
+            } catch (_: Exception) {}
+        }
+        networkCallback = null
+    }
 }
