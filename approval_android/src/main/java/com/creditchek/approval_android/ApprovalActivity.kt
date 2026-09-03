@@ -62,6 +62,10 @@ class ApprovalActivity : ComponentActivity() {
     }
 
     private fun finishWithResult(result: SessionResult) {
+        // 1. Notify static callback listener (if launched via CreditChekApproval.start)
+        CreditChekApproval.notifyResult(result)
+
+        // 2. Set Activity result for ActivityResultContract
         val data = Intent().apply {
             putExtra(EXTRA_RESULT, result)
         }
@@ -73,7 +77,6 @@ class ApprovalActivity : ComponentActivity() {
         setResult(resultCode, data)
         finish()
     }
-
     companion object {
         const val EXTRA_CONFIG = "extra_approval_config"
         const val EXTRA_RESULT = "extra_approval_result"

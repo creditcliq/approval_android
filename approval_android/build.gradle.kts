@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.compose)
+    `maven-publish` // Apply maven-publish plugin
 }
 
 android {
@@ -13,6 +14,9 @@ android {
         minSdk = 24
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        //Bundles consumer-rules.pro into the published .aar library:
+        consumerProguardFiles("consumer-rules.pro")
     }
 
     buildFeatures {
@@ -24,6 +28,27 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 
+    //Configure publishing to export release AAR with transitive dependencies
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+        }
+    }
+}
+
+
+//Configure the Maven Publication for JitPack
+afterEvaluate {
+    publishing {
+        publications {
+            create<MavenPublication>("release") {
+                from(components["release"])
+                groupId = "com.github.creditcliq"
+                artifactId = "approval_android"
+                version = "1.0.0"
+            }
+        }
+    }
 }
 
 dependencies {
@@ -35,6 +60,7 @@ dependencies {
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.activity.compose)
+
 
 
     //Icons (Material Icons)

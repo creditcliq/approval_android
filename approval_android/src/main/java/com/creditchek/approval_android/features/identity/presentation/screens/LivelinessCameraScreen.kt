@@ -99,7 +99,7 @@ fun LivelinessCameraScreen(
         ) {
             NetworkStatusPill(quality = NetworkQualityStatus.EXCELLENT)
 
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             // =========================================================
             // 📸 OVAL CAMERA FRAME (280 × 380 dp)
@@ -134,8 +134,12 @@ fun LivelinessCameraScreen(
                     }
 
                     // Progress Ring Sweeping around the Oval Frame
-                    val ringColor = if (livenessState.isFaceAligned) ApprovalSuccess else ApprovalBlue
-                    val bgGhost = if (livenessState.isFaceAligned) ApprovalSuccess.copy(alpha = 0.25f) else null
+                    val ringColor = when {
+                        !livenessState.isFaceAligned -> ApprovalBlue
+                        livenessState.isLowLight || livenessState.isTooClose || livenessState.isTooFar -> ApprovalWarning
+                        else -> ApprovalSuccess
+                    }
+                    val bgGhost = if (livenessState.isFaceAligned) ringColor.copy(alpha = 0.20f) else null
                     val currentProgress = if (livenessState.isFaceAligned) livenessState.verificationProgress else 1f
 
                     Canvas(modifier = Modifier.fillMaxSize()) {
@@ -151,18 +155,28 @@ fun LivelinessCameraScreen(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            // 3. Eye Contact Warning
-            EyeContactWarning()
+            // 3. Low Light / Distance / Eye Contact Banner
+            if (livenessState.isLowLight) {
+                LowLightWarning()
+            } else {
+                EyeContactWarning()
+            }
 
             Spacer(modifier = Modifier.height(10.dp))
 
             // 4. Dynamic Guidance Instruction Text
+            val guidanceColor = when {
+                !livenessState.isFaceAligned -> ApprovalTextSecondary
+                livenessState.isLowLight || livenessState.isTooClose || livenessState.isTooFar -> ApprovalWarning
+                else -> ApprovalBlue
+            }
+
             Text(
                 text = livenessState.guidance,
                 textAlign = TextAlign.Center,
                 fontSize = 16.sp,
-                fontWeight = FontWeight.Medium,
-                color = if (livenessState.isFaceAligned) ApprovalSuccess else ApprovalBlue,
+                fontWeight = FontWeight.SemiBold,
+                color = guidanceColor,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 8.dp)
@@ -170,6 +184,32 @@ fun LivelinessCameraScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
         }
+    }
+}
+
+@Composable
+private fun LowLightWarning() {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Default.Warning,
+            contentDescription = null,
+            tint = ApprovalWarning,
+            modifier = Modifier.size(17.dp)
+        )
+        Spacer(modifier = Modifier.width(6.dp))
+        Text(
+            text = "Environment is dim — ensure your face is well-lit",
+            fontSize = 13.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = Color(0xFF8A5200),
+            textAlign = TextAlign.Center
+        )
     }
 }
 
