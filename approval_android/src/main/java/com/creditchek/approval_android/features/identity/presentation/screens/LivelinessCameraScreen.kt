@@ -25,9 +25,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import com.creditchek.approval_android.core.Engines.ApprovalTtsEngine
-import com.creditchek.approval_android.core.Engines.LivelinessCameraEngine
-import com.creditchek.approval_android.core.Engines.LivelinessState
+import com.creditchek.approval_android.core.engines.ApprovalTtsEngine
+import com.creditchek.approval_android.core.engines.LivelinessCameraEngine
+import com.creditchek.approval_android.core.engines.LivelinessState
 import com.creditchek.approval_android.core.network.NetworkQuality
 import com.creditchek.approval_android.core.shared.components.PoweredByCreditChek
 import com.creditchek.approval_android.core.theme.*

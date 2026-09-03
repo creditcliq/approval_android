@@ -2,7 +2,7 @@ package com.creditchek.approval_android.features.identity.data.models
 
 import com.google.gson.annotations.SerializedName
 
-data class ValidKeyResopnse(
+data class ValidKeyResponse(
     @SerializedName("success") val success: Boolean,
     @SerializedName("message") val message: String?,
     @SerializedName("data") val data: ValidKeyData?

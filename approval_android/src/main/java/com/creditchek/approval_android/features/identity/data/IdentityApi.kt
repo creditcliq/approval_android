@@ -6,7 +6,7 @@ import com.creditchek.approval_android.features.identity.data.models.ChallengeVe
 import com.creditchek.approval_android.features.identity.data.models.CreateSessionRequest
 import com.creditchek.approval_android.features.identity.data.models.SessionCreatedResponse
 import com.creditchek.approval_android.features.identity.data.models.UpdateSessionRequest
-import com.creditchek.approval_android.features.identity.data.models.ValidKeyResopnse
+import com.creditchek.approval_android.features.identity.data.models.ValidKeyResponse
 import com.creditchek.approval_android.features.identity.data.models.ValidationSuccess
 import retrofit2.Response
 import retrofit2.http.*
@@ -18,7 +18,7 @@ interface IdentityApi {
     suspend fun validatePublicKey(
         @Header("token") publicKey: String,
         @Body emptyBody: Map<String, String> = emptyMap()
-    ): ValidKeyResopnse
+    ): ValidKeyResponse
 
     @POST(ApiConstants.CREATE_WIDGET_SESSION)
     suspend fun createSession(
