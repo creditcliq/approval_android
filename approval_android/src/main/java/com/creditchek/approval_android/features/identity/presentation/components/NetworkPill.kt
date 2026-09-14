@@ -36,7 +36,7 @@ fun NetworkStatusPill(
     val (statusText, statusColor) = when (quality) {
         NetworkQuality.EXCELLENT -> "Excellent network" to ApprovalSuccess
         NetworkQuality.MODERATE -> "Moderate network" to ApprovalWarning
-        NetworkQuality.UNSTABLE -> "Unstable network" to ApprovalWarning
+        NetworkQuality.UNSTABLE -> "Unstable network" to ApprovalDanger
     }
 
     Surface(

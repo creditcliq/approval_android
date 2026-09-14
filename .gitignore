@@ -15,5 +15,7 @@
 local.properties
 .agents
 GEMINI.md
-approval_flutter.zip
 .env
+
+approval_flutter.zip
+*.zip

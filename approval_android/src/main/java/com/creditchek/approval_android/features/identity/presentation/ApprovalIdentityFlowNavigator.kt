@@ -18,6 +18,7 @@ import com.creditchek.approval_android.core.shared.components.IdentityToastHost
 import com.creditchek.approval_android.core.shared.components.rememberToastState
 import com.creditchek.approval_android.features.identity.data.IdentityRepository
 import com.creditchek.approval_android.features.identity.data.IdentitySessionContext
+import com.creditchek.approval_android.features.identity.data.models.FaceVerificationStep
 import com.creditchek.approval_android.features.identity.presentation.screens.ApprovalErrorDefaults
 import com.creditchek.approval_android.features.identity.presentation.screens.ApprovalErrorScreen
 import com.creditchek.approval_android.features.identity.presentation.screens.BvnCheckScreen
@@ -52,6 +53,8 @@ fun ApprovalFlowNavigator(
     var isBvnLoading by remember { mutableStateOf(false) }
     var isIntroLoading by remember { mutableStateOf(false) }
     var retryReason by remember { mutableStateOf("No obstructions: remove hats,\nglasses and masks") }
+    var finalVerificationPassed by remember { mutableStateOf(false) }
+    var isRetryFlow by remember { mutableStateOf(false) }
 //    var lastCaptures by remember { mutableStateOf<List<FaceChallengeCapture>>(emptyList()) }
 
 
@@ -189,8 +192,6 @@ fun ApprovalFlowNavigator(
 
         // 5. CameraX + ML Kit Liveness Screen
         ApprovalStep.LIVELINESS -> {
-            var finalVerificationPassed by remember { mutableStateOf(false) }
-
             val context = LocalContext.current
             val networkEstimator = remember { NetworkQualityEstimator(context) }
             val networkQuality by networkEstimator.quality.collectAsState()
@@ -205,13 +206,14 @@ fun ApprovalFlowNavigator(
                 networkQuality = networkQuality,
                 onDismiss = { currentStep = ApprovalStep.PHOTO_INTRO },
                 onStepCapture = { capture ->
+                    val shouldRestart = isRetryFlow && capture.step == FaceVerificationStep.STILLNESS
                     repository.verifyChallenge(
                         accessToken = sessionContext.secretKey,
                         bvnImage = sessionContext.bvnDetails?.photo ?: "",
                         step = capture.step.apiName,
                         sessionId = sessionContext.sessionId,
                         frame = capture.jpegDataUrl,
-                        restart = false,
+                        restart = shouldRestart,
                     )
                 },
                 onVerificationComplete = { overallPassed ->
@@ -230,7 +232,8 @@ fun ApprovalFlowNavigator(
                     currentStep = ApprovalStep.RETRY
                 },
                 verifyAction = {
-                    true
+                    kotlinx.coroutines.delay(1500)
+                    finalVerificationPassed
                 })
         }
 
@@ -245,7 +248,10 @@ fun ApprovalFlowNavigator(
         ApprovalStep.RETRY -> {
             SelfieRetryScreen(
                 onDismiss = { onFinishWithResult(SessionResult.Cancelled) },
-                onTryAgain = { currentStep = ApprovalStep.LIVELINESS },
+                onTryAgain = {
+                    isRetryFlow = true
+                    currentStep = ApprovalStep.LIVELINESS
+                },
                 reason = retryReason
             )
         }

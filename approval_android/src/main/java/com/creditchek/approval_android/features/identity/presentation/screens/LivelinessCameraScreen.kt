@@ -49,6 +49,24 @@ fun LivelinessCameraScreen(
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     val coroutineScope = rememberCoroutineScope()
 
+    // 💡 Smile ID-Style Full Screen Brightness (Selfie Ring Light)
+    val activity = context as? android.app.Activity
+    DisposableEffect(activity) {
+        val originalBrightness = activity?.window?.attributes?.screenBrightness
+        activity?.window?.let { window ->
+            val layoutParams = window.attributes
+            layoutParams.screenBrightness = android.view.WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_FULL
+            window.attributes = layoutParams
+        }
+        onDispose {
+            activity?.window?.let { window ->
+                val layoutParams = window.attributes
+                layoutParams.screenBrightness = originalBrightness ?: android.view.WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
+                window.attributes = layoutParams
+            }
+        }
+    }
+
     var hasCameraPermission by remember { mutableStateOf(false) }
     var livenessState by remember { mutableStateOf(LivelinessState()) }
 
@@ -56,7 +74,6 @@ fun LivelinessCameraScreen(
     val ttsEngine = remember {
         ApprovalTtsEngine(context)
     }
-
 
     val engine = remember {
         LivelinessCameraEngine(
@@ -86,8 +103,8 @@ fun LivelinessCameraScreen(
     }
 
     // 👈 2. Voice Prompts triggered on step/guidance change
-    LaunchedEffect(livenessState.guidance, livenessState.isFaceAligned) {
-        if (livenessState.isFaceAligned) {
+    LaunchedEffect(livenessState.guidance, livenessState.currentStep, livenessState.isFaceAligned) {
+        if (livenessState.isFaceAligned && livenessState.guidance.startsWith("Step ")) {
             ttsEngine.speak(livenessState.guidance)
         }
     }
@@ -97,8 +114,6 @@ fun LivelinessCameraScreen(
             onVerificationComplete(livenessState.serverVerificationPassed)
         }
     }
-
-
 
     Column(
         modifier = Modifier

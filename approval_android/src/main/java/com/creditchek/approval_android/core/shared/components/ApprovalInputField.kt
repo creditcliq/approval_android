@@ -38,11 +38,11 @@ fun ApprovalTextField(
         // 1. Label with Red Asterisk
         val labelText = buildAnnotatedString {
             append(label)
-            if (isRequired) {
-                withStyle(SpanStyle(color = ApprovalDanger)) {
-                    append(" *")
-                }
-            }
+//            if (isRequired) {
+//                withStyle(SpanStyle(color = ApprovalDanger)) {
+//                    append(" *")
+//                }
+//            }
         }
 
         Text(

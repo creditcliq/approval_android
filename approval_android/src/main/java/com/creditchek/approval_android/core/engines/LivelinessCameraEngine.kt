@@ -21,10 +21,12 @@ import com.google.mlkit.vision.face.Face
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetector
 import com.google.mlkit.vision.face.FaceDetectorOptions
+import com.google.mlkit.vision.face.FaceLandmark
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlin.math.abs
+import kotlin.math.hypot
 
 // ── 1. Engine UI State ────────────────────────────────────────────────
 data class LivelinessState(
@@ -35,7 +37,7 @@ data class LivelinessState(
     val isTooFar: Boolean = false,
     val currentStepIndex: Int = 0,
     val currentStep: FaceVerificationStep = FaceVerificationStep.STILLNESS,
-    val totalSteps: Int = 3,
+    val totalSteps: Int = 8,
     val completedStepCount: Int = 0,
     val verificationProgress: Float = 0f,
     val guidance: String = "Starting camera...",
@@ -50,11 +52,16 @@ class LivelinessCameraEngine(
     private val onStepCapture: (suspend (FaceChallengeCapture) -> Result<ValidationData>)? = null,
     private val onStateChanged: (LivelinessState) -> Unit
 ) {
-    // Default to high-accuracy 3-step active challenge flow
+    // 👈 1:1 Complete 8-step sequence matching Flutter SDK
     private val verificationSteps = customSteps ?: listOf(
         FaceVerificationStep.STILLNESS,
+        FaceVerificationStep.LOOK_LEFT,
+        FaceVerificationStep.LOOK_RIGHT,
+        FaceVerificationStep.LOOK_UP,
+        FaceVerificationStep.LOOK_DOWN,
         FaceVerificationStep.BLINK_EYES,
-        FaceVerificationStep.SMILE
+        FaceVerificationStep.SMILE,
+        FaceVerificationStep.OPEN_MOUTH
     )
 
     private var state = LivelinessState(totalSteps = verificationSteps.size)
@@ -78,124 +85,153 @@ class LivelinessCameraEngine(
 
     private var completedStepCount = 0
     private var matchingFrames = 0
-    private var stillnessStartedAt: Long? = null
-    private val stillnessDurationMs = 2000L // 2.0s for reduced user fatigue while retaining liveness accuracy
 
-    // Adaptive Eye Tracking State
+    // Stillness hold tracking with 500ms jitter tolerance (Flutter parity)
+    private var stillnessStartedAt: Long? = null
+    private var lastStillnessMatchAt: Long = 0L
+    private val stillnessDurationMs = 1200L // 1.2 seconds smooth, snappy hold
+
+    // Motion & Rapid Rotation Tracking
+    private var prevEulerX: Float? = null
+    private var prevEulerY: Float? = null
+    private var prevEulerZ: Float? = null
+
+    // First turn yaw to enforce mirror-invariant opposite turn between look_left and look_right
+    private var firstTurnYaw: Float? = null
+
+    // Required consecutive steady frames for directional & expression challenges
+    private val requiredStableFrames = 4 // ~130ms steady hold before capture to eliminate motion blur
+
+    // Step Transition Grace Period (Prevents residual movement from previous challenge)
+    private var stepAvailableAt: Long = 0L
+    private val stepTransitionGraceMs = 500L
+
+    // Camera warmup delay to allow auto-exposure & white balance to settle after screen brightness flash
+    private var cameraReadyAt: Long = 0L
+    private val cameraWarmupDelayMs = 1200L
+
+    // Adaptive Eye Tracking & Closed-Eyelid Snapshot State
     private var baselineEyeOpenProbability = 0.75f
     private var blinkSawClosedEyes = false
+    private var lowestBlinkAvg = 1.0f
+    private var blinkClosedFrameDataUrl: String? = null
+
+    // Smile Tracking & Peak Snapshot State
+    private var peakSmileFrameDataUrl: String? = null
+    private var bestSmileScore: Float = 0f
 
     // Anti-Spoofing & Perspective Tracking State
     private var initialFaceWidth: Float? = null
     private var isEvaluatingStep = false
 
-    fun startCamera(
-        context: Context,
-        lifecycleOwner: LifecycleOwner,
-        previewView: PreviewView
-    ) {
-        previewViewRef = previewView
+    fun startCamera(context: Context, lifecycleOwner: LifecycleOwner, previewView: PreviewView) {
+        this.previewViewRef = previewView
         val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
+
         cameraProviderFuture.addListener({
+            val cameraProvider = cameraProviderFuture.get()
+
+            val preview = Preview.Builder().build().also {
+                it.surfaceProvider = previewView.surfaceProvider
+            }
+
+            val imageAnalysis = ImageAnalysis.Builder()
+                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_YUV_420_888)
+                .build()
+
+            imageAnalysis.setAnalyzer(
+                ContextCompat.getMainExecutor(context),
+                ImageAnalyzer(previewView.width, previewView.height)
+            )
+
             try {
-                val cameraProvider = cameraProviderFuture.get()
-
-                val preview = Preview.Builder().build().also {
-                    it.surfaceProvider = previewView.surfaceProvider
-                }
-
-                val imageAnalysis = ImageAnalysis.Builder()
-                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                    .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_YUV_420_888)
-                    .build()
-
-                imageAnalysis.setAnalyzer(ContextCompat.getMainExecutor(context)) { imageProxy ->
-                    processFrame(imageProxy)
-                }
-
-                val cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
-
                 cameraProvider.unbindAll()
                 cameraProvider.bindToLifecycle(
                     lifecycleOwner,
-                    cameraSelector,
+                    CameraSelector.DEFAULT_FRONT_CAMERA,
                     preview,
                     imageAnalysis
                 )
-
+                cameraReadyAt = System.currentTimeMillis() + cameraWarmupDelayMs
+                firstTurnYaw = null
+                completedStepCount = 0
+                resetTracking()
                 state = state.copy(
                     isCameraReady = true,
-                    guidance = "Position your face inside the frame"
+                    guidance = "Adjusting camera lighting..."
                 )
             } catch (e: Exception) {
-                Log.e("LivelinessEngine", "Camera binding failed: ${e.message}", e)
+                Log.e("LivelinessCameraEngine", "Camera binding failed", e)
+                state = state.copy(guidance = "Camera initialization failed")
             }
         }, ContextCompat.getMainExecutor(context))
     }
 
-    @OptIn(ExperimentalGetImage::class)
-    private fun processFrame(imageProxy: ImageProxy) {
-        val mediaImage = imageProxy.image
-        if (mediaImage == null || isEvaluatingStep) {
-            imageProxy.close()
-            return
-        }
+    private inner class ImageAnalyzer(
+        private val viewWidth: Int,
+        private val viewHeight: Int
+    ) : ImageAnalysis.Analyzer {
 
-        // 1. Analyze Frame Luminance (Ambient Light Quality)
-        val avgLuminance = calculateLuminance(imageProxy)
-        val isLowLight = avgLuminance < 38.0
-
-        val inputImage = InputImage.fromMediaImage(
-            mediaImage,
-            imageProxy.imageInfo.rotationDegrees
-        )
-
-        val frameWidth = imageProxy.width
-        val frameHeight = imageProxy.height
-
-        detector.process(inputImage)
-            .addOnSuccessListener { faces ->
-                evaluateFaces(faces, isLowLight, frameWidth, frameHeight)
-            }
-            .addOnFailureListener { e ->
-                Log.w("LivelinessEngine", "Face detection error: ${e.message}")
-            }
-            .addOnCompleteListener {
+        @OptIn(ExperimentalGetImage::class)
+        override fun analyze(imageProxy: ImageProxy) {
+            val mediaImage = imageProxy.image
+            if (mediaImage == null || isEvaluatingStep) {
                 imageProxy.close()
+                return
             }
-    }
 
-    private fun calculateLuminance(imageProxy: ImageProxy): Double {
-        return try {
-            val plane = imageProxy.planes.firstOrNull() ?: return 128.0
-            val buffer = plane.buffer
-            val remaining = buffer.remaining()
-            if (remaining == 0) return 128.0
+            // Low-light detection
+            val isLowLight = checkLowLight(imageProxy)
 
-            val data = ByteArray(remaining)
-            buffer.mark()
-            buffer.get(data)
-            buffer.reset()
+            val rotationDegrees = imageProxy.imageInfo.rotationDegrees
+            val inputImage = InputImage.fromMediaImage(mediaImage, rotationDegrees)
 
-            var sum = 0L
-            var count = 0
-            val step = 32 // fast sample
-            for (i in 0 until remaining step step) {
-                sum += (data[i].toInt() and 0xFF)
-                count++
-            }
-            if (count > 0) sum.toDouble() / count else 128.0
-        } catch (_: Exception) {
-            128.0
+            detector.process(inputImage)
+                .addOnSuccessListener { faces ->
+                    processFaces(faces, isLowLight, imageProxy.width, imageProxy.height)
+                }
+                .addOnFailureListener { e ->
+                    Log.e("LivelinessCameraEngine", "Face detection failed", e)
+                }
+                .addOnCompleteListener {
+                    imageProxy.close()
+                }
         }
     }
 
-    private fun evaluateFaces(
+    private fun checkLowLight(image: ImageProxy): Boolean {
+        val plane = image.planes[0]
+        val buffer = plane.buffer
+        val data = ByteArray(buffer.remaining())
+        buffer.get(data)
+
+        var sum = 0L
+        val step = 10 // sample every 10th pixel for performance
+        var samples = 0
+        for (i in data.indices step step) {
+            sum += (data[i].toInt() and 0xFF)
+            samples++
+        }
+        val avgLuminance = if (samples > 0) sum / samples else 100
+        return avgLuminance < 40 // Low-light threshold
+    }
+
+    private fun processFaces(
         faces: List<Face>,
         isLowLight: Boolean,
         frameWidth: Int,
         frameHeight: Int
     ) {
+        val now = System.currentTimeMillis()
+        if (now < cameraReadyAt) {
+            state = state.copy(
+                isCameraReady = true,
+                isFaceAligned = false,
+                guidance = "Adjusting camera lighting..."
+            )
+            return
+        }
         if (faces.isEmpty()) {
             resetTracking()
             state = state.copy(
@@ -253,41 +289,62 @@ class LivelinessCameraEngine(
         }
 
         if (state.isVerificationComplete) return
-
         if (completedStepCount >= verificationSteps.size) return
-        val step = verificationSteps[completedStepCount]
-        val now = System.currentTimeMillis()
 
-        // ── Dynamic & Adaptive Challenge Verification ──
+        val step = verificationSteps[completedStepCount]
+
+        // ── Motion & Angular Velocity Tracking ──
+        val curX = face.headEulerAngleX
+        val curY = face.headEulerAngleY
+        val curZ = face.headEulerAngleZ
+
+        val deltaAngle = if (prevEulerX != null && prevEulerY != null && prevEulerZ != null) {
+            maxOf(
+                abs(curX - prevEulerX!!),
+                abs(curY - prevEulerY!!),
+                abs(curZ - prevEulerZ!!)
+            )
+        } else 0f
+
+        prevEulerX = curX
+        prevEulerY = curY
+        prevEulerZ = curZ
+
+        // If the user's head is moving fast (> 4.0 deg/frame), they are in active motion
+        val isMovingFast = deltaAngle > 4.0f
+
+        // Wait for step transition grace period so user can read/hear instruction
+        if (now < stepAvailableAt) {
+            return
+        }
+
+        // ── Dynamic 8-Step Challenge Verification (Backend Axis Orientation) ──
         val matched = when (step) {
             FaceVerificationStep.STILLNESS -> {
                 val yaw = abs(face.headEulerAngleY)
                 val pitch = abs(face.headEulerAngleX)
                 val roll = abs(face.headEulerAngleZ)
-
-                // Initialize perspective anti-spoof baseline
-                if (initialFaceWidth == null) {
-                    initialFaceWidth = box.width().toFloat()
-                }
-
-                // Smooth angle tolerance (relaxed to 11° to eliminate natural hand tremors)
-                yaw < 11f && pitch < 11f && roll < 11f
+                // Natural hand-held posture tolerance and stationary face
+                yaw < 15f && pitch < 18f && roll < 15f && !isMovingFast
             }
 
             FaceVerificationStep.LOOK_LEFT -> {
-                face.headEulerAngleY < -13f
+                // Backend requires magnitude >= 15.0°
+                abs(face.headEulerAngleY) >= 15f
             }
 
             FaceVerificationStep.LOOK_RIGHT -> {
-                face.headEulerAngleY > 13f
+                // Must exceed 15.0° and be opposite direction to the first turn
+                val yaw = face.headEulerAngleY
+                abs(yaw) >= 15f && (firstTurnYaw == null || (yaw * firstTurnYaw!!) < 0)
             }
 
             FaceVerificationStep.LOOK_UP -> {
-                face.headEulerAngleX > 8f
+                face.headEulerAngleX > 9f
             }
 
             FaceVerificationStep.LOOK_DOWN -> {
-                face.headEulerAngleX < -8f
+                face.headEulerAngleX < -9f
             }
 
             FaceVerificationStep.BLINK_EYES -> {
@@ -295,49 +352,85 @@ class LivelinessCameraEngine(
                 val right = face.rightEyeOpenProbability ?: 0.9f
                 val currentAvg = (left + right) / 2f
 
-                // Track adaptive baseline for individual eye shapes
                 if (!blinkSawClosedEyes) {
                     if (currentAvg > baselineEyeOpenProbability) {
                         baselineEyeOpenProbability = currentAvg
                     }
                 }
 
-                // Adaptive relative thresholds
-                val closeThreshold = minOf(0.35f, baselineEyeOpenProbability * 0.55f)
-                val openThreshold = maxOf(0.55f, baselineEyeOpenProbability * 0.75f)
-
-                if (left < closeThreshold && right < closeThreshold) {
-                    blinkSawClosedEyes = true
+                // Eyelids are closed: take snapshot immediately while eyes are shut
+                // Keep recording if eyelids close even further (lowest EAR)
+                if (currentAvg < 0.35f) {
+                    if (!blinkSawClosedEyes || currentAvg < lowestBlinkAvg) {
+                        blinkSawClosedEyes = true
+                        lowestBlinkAvg = currentAvg
+                        blinkClosedFrameDataUrl = previewViewRef?.bitmap?.let { bmp ->
+                            BitmapUtils.toBase64JpegDataUrl(bmp, targetSize = 600)
+                        }
+                    }
                 }
 
-                blinkSawClosedEyes && (left > openThreshold && right > openThreshold)
+                // Blink action is satisfied when eyes have shut and then reopened
+                blinkSawClosedEyes && currentAvg >= (baselineEyeOpenProbability - 0.15f)
             }
 
             FaceVerificationStep.SMILE -> {
-                // Adaptive smile detection (0.55f for natural subtle smiles)
-                (face.smilingProbability ?: 0f) >= 0.55f
+                val smilingProb = face.smilingProbability ?: 0f
+
+                // Save snapshot at peak smile (broadest & most expressive frame)
+                if (smilingProb >= 0.65f && smilingProb > bestSmileScore) {
+                    bestSmileScore = smilingProb
+                    peakSmileFrameDataUrl = previewViewRef?.bitmap?.let { bmp ->
+                        BitmapUtils.toBase64JpegDataUrl(bmp, targetSize = 600)
+                    }
+                }
+
+                smilingProb >= 0.78f
             }
 
-            FaceVerificationStep.OPEN_MOUTH -> true
+            FaceVerificationStep.OPEN_MOUTH -> {
+                val nose = face.getLandmark(FaceLandmark.NOSE_BASE)?.position
+                val bottomLip = face.getLandmark(FaceLandmark.MOUTH_BOTTOM)?.position
+                val leftCorner = face.getLandmark(FaceLandmark.MOUTH_LEFT)?.position
+                val rightCorner = face.getLandmark(FaceLandmark.MOUTH_RIGHT)?.position
+
+                if (nose != null && bottomLip != null && leftCorner != null && rightCorner != null) {
+                    val mouthNoseDist = abs(bottomLip.y - nose.y)
+                    val mouthWidth = abs(rightCorner.x - leftCorner.x)
+                    if (mouthWidth > 0) {
+                        (mouthNoseDist / mouthWidth) > 0.60f
+                    } else {
+                        (face.smilingProbability ?: 0f) > 0.40f
+                    }
+                } else {
+                    (face.smilingProbability ?: 0f) > 0.40f
+                }
+            }
         }
 
-        var stepProgress = 0f
-
+        val stepProgress: Float
         if (step == FaceVerificationStep.STILLNESS) {
             if (matched) {
-                if (stillnessStartedAt == null) {
+                if (stillnessStartedAt == null || (now - lastStillnessMatchAt > 500L)) {
                     stillnessStartedAt = now
                 }
+                lastStillnessMatchAt = now
                 val elapsed = now - stillnessStartedAt!!
                 stepProgress = (elapsed.toFloat() / stillnessDurationMs).coerceIn(0f, 1f)
                 if (elapsed >= stillnessDurationMs) {
                     onStepCompleted(step)
                 }
             } else {
-                stillnessStartedAt = null
-                stepProgress = 0f
+                // Allow brief 500ms jitter tolerance before resetting stillness
+                if (lastStillnessMatchAt != 0L && (now - lastStillnessMatchAt > 500L)) {
+                    stillnessStartedAt = null
+                    lastStillnessMatchAt = 0L
+                    stepProgress = 0f
+                } else {
+                    stepProgress = (stillnessStartedAt?.let { (now - it).toFloat() / stillnessDurationMs } ?: 0f).coerceIn(0f, 1f)
+                }
             }
-        } else {
+        } else if (step == FaceVerificationStep.BLINK_EYES) {
             if (matched) {
                 matchingFrames++
             } else {
@@ -345,23 +438,33 @@ class LivelinessCameraEngine(
             }
 
             stepProgress = (matchingFrames / 2f).coerceIn(0f, 1f)
-            if (matchingFrames >= (if (step == FaceVerificationStep.BLINK_EYES) 1 else 2)) {
-                onStepCompleted(step)
+            if (matchingFrames >= 2) {
+                // Submit the closed-eyelid snapshot captured when eyes were shut
+                onStepCompleted(step, customFrameDataUrl = blinkClosedFrameDataUrl)
+            }
+        } else {
+            // ── Dynamic Gestures (Smooth 4-frame stability counter) ──
+            if (matched) {
+                if (!isMovingFast) {
+                    matchingFrames++
+                }
+                stepProgress = (matchingFrames.toFloat() / requiredStableFrames).coerceIn(0f, 1f)
+
+                if (matchingFrames >= requiredStableFrames) {
+                    if (step == FaceVerificationStep.LOOK_LEFT) {
+                        firstTurnYaw = face.headEulerAngleY
+                    }
+                    val frameUrl = if (step == FaceVerificationStep.SMILE) peakSmileFrameDataUrl else null
+                    onStepCompleted(step, customFrameDataUrl = frameUrl)
+                }
+            } else {
+                // Smooth decay instead of hard drop to avoid flashing the progress ring
+                matchingFrames = maxOf(0, matchingFrames - 1)
+                stepProgress = (matchingFrames.toFloat() / requiredStableFrames).coerceIn(0f, 1f)
             }
         }
 
         if (!state.isVerificationComplete) {
-            val stepPrompt = when (step) {
-                FaceVerificationStep.STILLNESS -> "Hold still"
-                FaceVerificationStep.BLINK_EYES -> "Blink your eyes"
-                FaceVerificationStep.SMILE -> "Smile for the camera"
-                FaceVerificationStep.LOOK_LEFT -> "Turn head slightly left"
-                FaceVerificationStep.LOOK_RIGHT -> "Turn head slightly right"
-                FaceVerificationStep.LOOK_UP -> "Look up"
-                FaceVerificationStep.LOOK_DOWN -> "Look down"
-                FaceVerificationStep.OPEN_MOUTH -> "Open your mouth"
-            }
-
             state = state.copy(
                 isFaceAligned = true,
                 isLowLight = isLowLight,
@@ -370,7 +473,7 @@ class LivelinessCameraEngine(
                 currentStepIndex = completedStepCount,
                 currentStep = step,
                 verificationProgress = calculateProgress(stepProgress),
-                guidance = "Step ${completedStepCount + 1} of ${verificationSteps.size}: $stepPrompt"
+                guidance = "Step ${completedStepCount + 1} of ${verificationSteps.size}: ${step.instruction}"
             )
         }
     }
@@ -380,34 +483,53 @@ class LivelinessCameraEngine(
         return ((completedStepCount + stepProgress) / total).coerceIn(0f, 1f)
     }
 
-    private fun onStepCompleted(step: FaceVerificationStep) {
+    private fun onStepCompleted(
+        step: FaceVerificationStep,
+        customFrameDataUrl: String? = null
+    ) {
         isEvaluatingStep = true
 
-        // 📸 1. Grab 600x600 normalized snapshot for this step
-        val frameDataUrl = previewViewRef?.bitmap?.let { bmp ->
+        // 📸 1. Grab 600x600 normalized snapshot (or use the pre-captured closed-eyelids snapshot)
+        val frameDataUrl = customFrameDataUrl ?: (previewViewRef?.bitmap?.let { bmp ->
             BitmapUtils.toBase64JpegDataUrl(bmp, targetSize = 600)
-        } ?: ""
+        } ?: "")
 
         val capture = FaceChallengeCapture(step = step, jpegDataUrl = frameDataUrl)
         val isFinalStep = completedStepCount >= verificationSteps.size - 1
 
         // 🌐 2. Send request to /liveness/verify-challenge in background
         coroutineScope.launch(Dispatchers.IO) {
-            val result = onStepCapture?.invoke(capture)
-            val overallPassed = result?.getOrNull()?.overallPassed ?: true
+            try {
+                val result = onStepCapture?.invoke(capture)
 
-            completedStepCount++
-            resetTracking()
-            isEvaluatingStep = false
+                completedStepCount++
+                resetTracking()
 
-            if (isFinalStep) {
-                state = state.copy(
-                    isVerificationComplete = true,
-                    completedStepCount = verificationSteps.size,
-                    verificationProgress = 1f,
-                    serverVerificationPassed = overallPassed,
-                    guidance = "Completing verification..."
-                )
+                if (isFinalStep) {
+                    val finalSuccess = result?.getOrNull()?.overallPassed == true
+                    state = state.copy(
+                        isVerificationComplete = true,
+                        completedStepCount = verificationSteps.size,
+                        verificationProgress = 1f,
+                        serverVerificationPassed = finalSuccess,
+                        guidance = "Completing verification..."
+                    )
+                }
+            } catch (e: Exception) {
+                Log.e("LivelinessCameraEngine", "Step verification network error", e)
+                completedStepCount++
+                resetTracking()
+                if (isFinalStep) {
+                    state = state.copy(
+                        isVerificationComplete = true,
+                        completedStepCount = verificationSteps.size,
+                        verificationProgress = 1f,
+                        serverVerificationPassed = false,
+                        guidance = "Completing verification..."
+                    )
+                }
+            } finally {
+                isEvaluatingStep = false
             }
         }
     }
@@ -415,7 +537,16 @@ class LivelinessCameraEngine(
     private fun resetTracking() {
         matchingFrames = 0
         stillnessStartedAt = null
+        lastStillnessMatchAt = 0L
         blinkSawClosedEyes = false
+        lowestBlinkAvg = 1.0f
+        blinkClosedFrameDataUrl = null
+        peakSmileFrameDataUrl = null
+        bestSmileScore = 0f
+        prevEulerX = null
+        prevEulerY = null
+        prevEulerZ = null
+        stepAvailableAt = System.currentTimeMillis() + stepTransitionGraceMs
     }
 
     fun release() {

@@ -25,12 +25,29 @@ enum class NetworkQuality(val label: String, val color: Color) {
 
     companion object {
         /**
-         * Categorizes network based on hardware link bandwidth in Kbps
+         * Categorizes network based on hardware capabilities and link bandwidth
          */
+        fun fromCapabilities(capabilities: NetworkCapabilities): NetworkQuality {
+            val hasInternet = capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+            val isValidated = capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+            if (!hasInternet || !isValidated) {
+                return UNSTABLE
+            }
+            val downstreamKbps = capabilities.linkDownstreamBandwidthKbps
+            return when {
+                downstreamKbps >= 10_000 -> EXCELLENT
+                downstreamKbps >= 1_500 -> MODERATE
+                downstreamKbps > 0 -> UNSTABLE
+                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
+                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> EXCELLENT
+                else -> MODERATE
+            }
+        }
+
         fun fromBandwidthKbps(downstreamKbps: Int): NetworkQuality = when {
-            downstreamKbps >= 10_000 -> EXCELLENT // >=10 Mbps (5G, High-speed Wi-Fi)
-            downstreamKbps >= 1_500 -> MODERATE // 1.5 - 10 Mbps (4G LTE)
-            else                     -> UNSTABLE      // < 1.5 Mbps (3G, 2G, slow network)
+            downstreamKbps >= 10_000 -> EXCELLENT
+            downstreamKbps >= 1_500 -> MODERATE
+            else                     -> UNSTABLE
         }
     }
 }
@@ -39,7 +56,7 @@ enum class NetworkQuality(val label: String, val color: Color) {
 
 /**
  * 100% Local Hardware-Based Network Quality Monitor.
- * Zero HTTP pings, zero server costs, zero battery drain.
+ * Reacts dynamically to Android ConnectivityManager callbacks.
  */
 class NetworkQualityEstimator(context: Context) {
     private val connectivityManager =
@@ -62,16 +79,7 @@ class NetworkQualityEstimator(context: Context) {
                 network: Network,
                 capabilities: NetworkCapabilities
             ) {
-                val hasInternet = capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-                val isValidated =
-                    capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
-                if (!hasInternet || !isValidated) {
-                    _quality.value = NetworkQuality.UNSTABLE
-                    return
-                }
-                // Downstream bandwidth provided directly by the Android radio hardware
-                val downstreamKbps = capabilities.linkDownstreamBandwidthKbps
-                _quality.value = NetworkQuality.fromBandwidthKbps(downstreamKbps)
+                _quality.value = NetworkQuality.fromCapabilities(capabilities)
             }
             override fun onLost(network: Network) {
                 _quality.value = NetworkQuality.UNSTABLE
@@ -95,12 +103,11 @@ class NetworkQualityEstimator(context: Context) {
         val manager = connectivityManager ?: return
         val activeNetwork = manager.activeNetwork
         val capabilities = manager.getNetworkCapabilities(activeNetwork)
-        if (capabilities == null || !capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)) {
+        if (capabilities == null) {
             _quality.value = NetworkQuality.UNSTABLE
             return
         }
-        val downstreamKbps = capabilities.linkDownstreamBandwidthKbps
-        _quality.value = NetworkQuality.fromBandwidthKbps(downstreamKbps)
+        _quality.value = NetworkQuality.fromCapabilities(capabilities)
     }
     /**
      * Unregisters the OS listener when leaving the camera screen.

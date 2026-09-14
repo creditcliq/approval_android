@@ -123,14 +123,14 @@ fun DemoAppScreen() {
                     CreditChekApproval.start(
                         context = context,
                         config = ApprovalConfig(
-                            publicKey = publicKey,
+                            publicKey = "vy6LZWI/l/pOc868z8LAgEBCdvsSomPev2TxLqIdlNZIueMM0Agl8G88zxyE65LN",
                             environment = ApprovalEnv.SANDBOX,
                             userData = AUserData(
                                 firstName = "John",
                                 lastName = "Doe",
                                 email = "johndoe@example.com",
-                                bvn = "22577700013",
-                                dob = "03/09/2002"
+                                bvn = "",
+                                dob = ""
                             )
                         )
                     ) { result ->
