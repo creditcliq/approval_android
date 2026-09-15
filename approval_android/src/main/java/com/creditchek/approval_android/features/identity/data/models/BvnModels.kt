@@ -3,10 +3,16 @@ package com.creditchek.approval_android.features.identity.data.models
 import com.google.gson.annotations.SerializedName
 
 data class BvnResponse(
-    @SerializedName("status") val status: Boolean?,
-    @SerializedName("message") val message: String?,
-    @SerializedName("data") val data: BvnDetails?
-)
+    @SerializedName("success") val success: Boolean? = null,
+    @SerializedName("status") val status: Boolean? = null,
+    @SerializedName("message") val message: String? = null,
+    @SerializedName("data") val data: BvnDetails? = null
+) {
+    
+        val isSuccessful: Boolean
+        get() = status == true || success == true
+
+}
 
 data class BvnDetails(
     @SerializedName("bvn") val bvn: String?,

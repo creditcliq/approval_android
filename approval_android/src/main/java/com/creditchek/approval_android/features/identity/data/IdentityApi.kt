@@ -2,12 +2,12 @@ package com.creditchek.approval_android.features.identity.data
 
 import com.creditchek.approval_android.core.network.ApiConstants
 import com.creditchek.approval_android.features.identity.data.models.BvnResponse
-import com.creditchek.approval_android.features.identity.data.models.ChallengeVerifyRequest
+import com.creditchek.approval_android.features.liveliness.data.models.ChallengeVerifyRequest
 import com.creditchek.approval_android.features.identity.data.models.CreateSessionRequest
 import com.creditchek.approval_android.features.identity.data.models.SessionCreatedResponse
 import com.creditchek.approval_android.features.identity.data.models.UpdateSessionRequest
 import com.creditchek.approval_android.features.identity.data.models.ValidKeyResponse
-import com.creditchek.approval_android.features.identity.data.models.ValidationSuccess
+import com.creditchek.approval_android.features.liveliness.data.models.ValidationSuccess
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -25,11 +25,18 @@ interface IdentityApi {
         @Body request: CreateSessionRequest
     ): SessionCreatedResponse
 
-    @PUT("${ApiConstants.UPDATE_WIDGET_SESSION}/{sessionId}")
+    @PUT("${ApiConstants.WIDGET_SESSION}/{sessionId}")
     suspend fun updateWidgetSession(
         @Path("sessionId") sessionId: String,
         @Header("token") secretKey: String,
         @Body request: UpdateSessionRequest
+    ): Response<Map<String, Any>>
+
+
+    @GET("${ApiConstants.WIDGET_SESSION}/{sessionId}")
+    suspend fun getWidgetSession(
+        @Path("sessionId") sessionId: String,
+        @Header("token") secretKey: String
     ): Response<Map<String, Any>>
 
     @POST(ApiConstants.VERIFY_IDENTITY_DATA)
@@ -47,4 +54,11 @@ interface IdentityApi {
         @Header("accessToken") accessToken: String,
         @Body request: ChallengeVerifyRequest
     ): ValidationSuccess
+
+    @GET("${ApiConstants.SESSION_BVN_DATA}/{sessionId}")
+    suspend fun getSessionBvnData(
+        @Path("sessionId") sessionId: String,
+        @Header("token") secretKey: String,
+//        @Body emptyBody: Map<String, String> = emptyMap()
+    ): BvnResponse
 }

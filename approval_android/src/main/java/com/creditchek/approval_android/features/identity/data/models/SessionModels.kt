@@ -7,8 +7,22 @@ data class CreateSessionRequest(
     @SerializedName("sessionId") val sessionId: String
 )
 
+
+enum class Status {
+    @SerializedName("pending") PENDING,
+    @SerializedName("completed") COMPLETED,
+    @SerializedName("failed") FAILED
+}
+
+enum class Service {
+    @SerializedName("bvn") BVN,
+    @SerializedName("liveness") LIVELINESS
+}
+
 data class UpdateSessionRequest(
-    @SerializedName("bvn") val bvn: String
+    @SerializedName("bvn") val bvn: String? = null,
+    @SerializedName("service") val service: Service? = null,
+    @SerializedName("status") val status: Status? = null,
 )
 
 data class SessionCreatedResponse(

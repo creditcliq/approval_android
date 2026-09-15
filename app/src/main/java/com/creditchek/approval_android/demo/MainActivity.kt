@@ -36,6 +36,7 @@ import com.creditchek.approval_android.CreditChekApproval
 import com.creditchek.approval_android.core.session.AUserData
 import com.creditchek.approval_android.core.session.ApprovalConfig
 import com.creditchek.approval_android.core.session.ApprovalEnv
+import com.creditchek.approval_android.core.session.ApprovalModule
 import com.creditchek.approval_android.core.session.SessionResult
 
 class MainActivity : ComponentActivity() {
@@ -125,12 +126,13 @@ fun DemoAppScreen() {
                         config = ApprovalConfig(
                             publicKey = "vy6LZWI/l/pOc868z8LAgEBCdvsSomPev2TxLqIdlNZIueMM0Agl8G88zxyE65LN",
                             environment = ApprovalEnv.SANDBOX,
+                            modules = listOf(ApprovalModule.IDENTITY, ApprovalModule.LIVELINESS),
                             userData = AUserData(
                                 firstName = "John",
                                 lastName = "Doe",
                                 email = "johndoe@example.com",
-                                bvn = "",
-                                dob = ""
+                                dob = "03/09/2002",
+                                bvn = "22577700013"
                             )
                         )
                     ) { result ->
@@ -139,10 +141,12 @@ fun DemoAppScreen() {
                                 sessionStatus = "✅ Success! Session ID:\n${result.sessionId}"
                                 statusColor = Color(0xFF12A84A)
                             }
+
                             is SessionResult.Cancelled -> {
                                 sessionStatus = "⚠️ Verification was dismissed/cancelled by user."
                                 statusColor = Color(0xFFFF6D22)
                             }
+
                             is SessionResult.Error -> {
                                 sessionStatus = "❌ Error [${result.code}]:\n${result.message}"
                                 statusColor = Color(0xFFFF2543)

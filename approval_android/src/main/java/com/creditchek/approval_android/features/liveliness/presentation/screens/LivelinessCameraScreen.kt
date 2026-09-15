@@ -34,11 +34,11 @@ import com.creditchek.approval_android.core.engines.LivelinessState
 import com.creditchek.approval_android.core.network.NetworkQuality
 import com.creditchek.approval_android.core.shared.components.PoweredByCreditChek
 import com.creditchek.approval_android.core.theme.*
-import com.creditchek.approval_android.features.identity.data.models.FaceChallengeCapture
-import com.creditchek.approval_android.features.identity.data.models.ValidationData
+import com.creditchek.approval_android.features.liveliness.data.models.FaceChallengeCapture
+import com.creditchek.approval_android.features.liveliness.data.models.ValidationData
 import com.creditchek.approval_android.features.identity.presentation.components.ApprovalHeader
-import com.creditchek.approval_android.features.identity.presentation.components.NetworkStatusPill
-import com.creditchek.approval_android.features.identity.presentation.components.drawFaceOvalBorder
+import com.creditchek.approval_android.features.liveliness.presentation.components.NetworkStatusPill
+import com.creditchek.approval_android.features.liveliness.presentation.components.drawFaceOvalBorder
 
 @Composable
 fun LivelinessCameraScreen(

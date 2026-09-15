@@ -1,4 +1,4 @@
-package com.creditchek.approval_android.features.identity.presentation.components
+package com.creditchek.approval_android.features.liveliness.presentation.components
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border

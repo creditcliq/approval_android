@@ -1,4 +1,4 @@
-package com.creditchek.approval_android.features.identity.presentation.components
+package com.creditchek.approval_android.features.liveliness.presentation.components
 
 import android.graphics.PathMeasure
 import androidx.compose.ui.geometry.Size

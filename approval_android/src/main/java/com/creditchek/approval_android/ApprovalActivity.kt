@@ -8,14 +8,22 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 
 import com.creditchek.approval_android.core.session.ApprovalConfig
+import com.creditchek.approval_android.core.session.ApprovalModule
 import com.creditchek.approval_android.core.session.SessionResult
 import com.creditchek.approval_android.core.theme.ApprovalTheme
 import com.creditchek.approval_android.features.identity.presentation.ApprovalFlowNavigator
 
+sealed interface ApprovalStep {
+    enum class Identity : ApprovalStep {
+        SPLASH, ERROR, WELCOME, BVN_CHECK, SUCCESS, LIVELINESS
+    }
 
-enum class ApprovalStep {
-    SPLASH, ERROR, WELCOME, BVN_CHECK, PHOTO_INTRO, LIVELINESS, PROCESSING, SUCCESS, RETRY
+    enum class Liveliness  : ApprovalStep {
+        SPLASH, PHOTO_INTRO, LIVELINESS, PROCESSING, SUCCESS, RETRY, ERROR
+    }
 }
+
+//typealias ApprovalLivelinessStep = ApprovalStep.Liveliness
 
 class ApprovalActivity : ComponentActivity() {
 
@@ -32,9 +40,11 @@ class ApprovalActivity : ComponentActivity() {
         setContent {
             ApprovalTheme {
                 ApprovalFlowNavigator(
-                    config = config, onFinishWithResult = { result ->
+                    config = config,
+                    onFinishWithResult = { result ->
                         finishWithResult(result)
-                    })
+                    }
+                )
             }
         }
     }
@@ -61,6 +71,9 @@ class ApprovalActivity : ComponentActivity() {
         const val EXTRA_RESULT = "extra_approval_result"
     }
 }
+
+
+
 
 
 

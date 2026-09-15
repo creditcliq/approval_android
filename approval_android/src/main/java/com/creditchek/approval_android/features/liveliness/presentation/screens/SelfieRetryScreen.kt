@@ -1,9 +1,8 @@
-package com.creditchek.approval_android.features.identity.presentation.screens
+package com.creditchek.approval_android.features.liveliness.presentation.screens
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -15,9 +14,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Face
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -39,7 +35,7 @@ import com.creditchek.approval_android.core.theme.ApprovalCanvas
 import com.creditchek.approval_android.core.theme.ApprovalDanger
 import com.creditchek.approval_android.core.theme.ApprovalTheme
 import com.creditchek.approval_android.features.identity.presentation.components.ApprovalHeader
-import com.creditchek.approval_android.features.identity.presentation.components.drawFaceOvalBorder
+import com.creditchek.approval_android.features.liveliness.presentation.components.drawFaceOvalBorder
 
 @Composable
 fun SelfieRetryScreen(

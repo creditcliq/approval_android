@@ -36,6 +36,7 @@ fun BvnCheckScreen(
     onBack: () -> Unit,
     onProceed: (firstName: String, lastName: String, dob: String, bvn: String) -> Unit
 ) {
+    var isEditable by remember { mutableStateOf(value = initialUserData != null || isLoading) }
     var firstName by remember { mutableStateOf(initialUserData?.firstName ?: "") }
     var lastName by remember { mutableStateOf(initialUserData?.lastName ?: "") }
     var dob by remember { mutableStateOf(initialUserData?.dob ?: "") }
@@ -150,7 +151,8 @@ fun BvnCheckScreen(
                 value = firstName,
                 onValueChange = { firstName = it },
                 hint = "Enter First Name",
-                leadingIcon = Icons.Default.Person
+                leadingIcon = Icons.Default.Person,
+                readOnly = isEditable
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -160,7 +162,8 @@ fun BvnCheckScreen(
                 value = lastName,
                 onValueChange = { lastName = it },
                 hint = "Enter Last Name",
-                leadingIcon = Icons.Default.Person
+                leadingIcon = Icons.Default.Person,
+                readOnly = isEditable
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -172,7 +175,7 @@ fun BvnCheckScreen(
                 hint = "dd/mm/yyyy",
                 readOnly = true,
                 trailingIcon = Icons.Default.DateRange,
-                onClick = { showDatePicker = true}
+                onClick = { showDatePicker = !isEditable},
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -186,7 +189,8 @@ fun BvnCheckScreen(
                     }
                 },
                 hint = "Enter BVN",
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                readOnly = isEditable
             )
 
             Spacer(modifier = Modifier.height(16.dp))

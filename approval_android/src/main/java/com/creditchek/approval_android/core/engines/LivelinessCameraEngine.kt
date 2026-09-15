@@ -12,10 +12,10 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
-import com.creditchek.approval_android.features.identity.data.BitmapUtils
-import com.creditchek.approval_android.features.identity.data.models.FaceChallengeCapture
-import com.creditchek.approval_android.features.identity.data.models.FaceVerificationStep
-import com.creditchek.approval_android.features.identity.data.models.ValidationData
+import com.creditchek.approval_android.features.liveliness.data.BitmapUtils
+import com.creditchek.approval_android.features.liveliness.data.models.FaceChallengeCapture
+import com.creditchek.approval_android.features.liveliness.data.models.FaceVerificationStep
+import com.creditchek.approval_android.features.liveliness.data.models.ValidationData
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.face.Face
 import com.google.mlkit.vision.face.FaceDetection
@@ -26,7 +26,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlin.math.abs
-import kotlin.math.hypot
 
 // ── 1. Engine UI State ────────────────────────────────────────────────
 data class LivelinessState(

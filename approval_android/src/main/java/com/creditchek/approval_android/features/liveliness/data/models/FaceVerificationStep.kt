@@ -1,4 +1,4 @@
-package com.creditchek.approval_android.features.identity.data.models
+package com.creditchek.approval_android.features.liveliness.data.models
 
 /**
  * 1:1 Port of Flutter's FaceVerificationStep enum from approval_flutter.zip

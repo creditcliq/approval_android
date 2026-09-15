@@ -1,4 +1,4 @@
-package com.creditchek.approval_android.features.identity.presentation.screens
+package com.creditchek.approval_android.features.liveliness.presentation.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement

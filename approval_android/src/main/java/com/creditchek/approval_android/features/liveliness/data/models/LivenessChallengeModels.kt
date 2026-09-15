@@ -1,4 +1,4 @@
-package com.creditchek.approval_android.features.identity.data.models
+package com.creditchek.approval_android.features.liveliness.data.models
 
 import com.google.gson.annotations.SerializedName
 
