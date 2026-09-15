@@ -77,16 +77,16 @@ class IdentityRepository(
     }
 
     // ── 5. Get Widget Session ──
-    suspend fun getWidgetSession(sessionId: String, secretKey: String) {
-        val response = api.getWidgetSession(
-            sessionId = sessionId,
-            secretKey = secretKey,
-        )
-
-        if (!response.isSuccessful) {
-            throw Exception("Failed to get widget session")
-        }
-    }
+//    suspend fun getWidgetSession(sessionId: String, secretKey: String) {
+//        val response = api.getWidgetSession(
+//            sessionId = sessionId,
+//            secretKey = secretKey,
+//        )
+//
+//        if (!response.isSuccessful) {
+//            throw Exception("Failed to get widget session")
+//        }
+//    }
 
     // ── 6. Verify Liveness Challenge ──
     suspend fun verifyChallenge(

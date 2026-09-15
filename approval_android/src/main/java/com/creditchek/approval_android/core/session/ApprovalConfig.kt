@@ -15,11 +15,11 @@ data class ApprovalConfig(
         val sessionId: String? = null,
         val environment: ApprovalEnv = ApprovalEnv.SANDBOX
 ) : Serializable {
-    fun validate() {
-        require(publicKey.isNotBlank()) { "ApprovalConfig.publicKey cannot be empty" }
-        require(modules.isNotEmpty()) { "ApprovalConfig.modules cannot be empty" }
-        if (modules.contains(ApprovalModule.LIVELINESS)) {
-            require(!sessionId.isNullOrBlank()) { "ApprovalConfig.sessionId cannot be empty" }
-        }
-    }
+//    fun validate() {
+//        require(publicKey.isNotBlank()) { "ApprovalConfig.publicKey cannot be empty" }
+//        require(modules.isNotEmpty()) { "ApprovalConfig.modules cannot be empty" }
+//        if (modules.contains(ApprovalModule.LIVELINESS)) {
+//            require(!sessionId.isNullOrBlank()) { "ApprovalConfig.sessionId cannot be empty" }
+//        }
+//    }
 }

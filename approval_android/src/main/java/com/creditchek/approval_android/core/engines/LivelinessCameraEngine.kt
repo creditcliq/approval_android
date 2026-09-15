@@ -47,7 +47,7 @@ data class LivelinessState(
 // ── 2. Real-Time Challenge Camera Engine ──────────────────────────────
 class LivelinessCameraEngine(
     private val coroutineScope: CoroutineScope,
-    private val customSteps: List<FaceVerificationStep>? = null,
+    customSteps: List<FaceVerificationStep>? = null,
     private val onStepCapture: (suspend (FaceChallengeCapture) -> Result<ValidationData>)? = null,
     private val onStateChanged: (LivelinessState) -> Unit
 ) {

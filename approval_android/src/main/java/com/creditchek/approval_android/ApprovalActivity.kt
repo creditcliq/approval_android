@@ -1,6 +1,5 @@
 package com.creditchek.approval_android
 
-import android.app.Activity
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -8,7 +7,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 
 import com.creditchek.approval_android.core.session.ApprovalConfig
-import com.creditchek.approval_android.core.session.ApprovalModule
 import com.creditchek.approval_android.core.session.SessionResult
 import com.creditchek.approval_android.core.theme.ApprovalTheme
 import com.creditchek.approval_android.features.identity.presentation.ApprovalFlowNavigator
@@ -58,9 +56,9 @@ class ApprovalActivity : ComponentActivity() {
             putExtra(EXTRA_RESULT, result)
         }
         val resultCode = when (result) {
-            is SessionResult.Success -> Activity.RESULT_OK
-            is SessionResult.Cancelled -> Activity.RESULT_CANCELED
-            is SessionResult.Error -> Activity.RESULT_FIRST_USER
+            is SessionResult.Success -> RESULT_OK
+            is SessionResult.Cancelled ->RESULT_CANCELED
+            is SessionResult.Error -> RESULT_FIRST_USER
         }
         setResult(resultCode, data)
         finish()

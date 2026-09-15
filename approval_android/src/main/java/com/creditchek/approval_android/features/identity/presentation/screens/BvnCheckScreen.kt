@@ -26,7 +26,6 @@ import com.creditchek.approval_android.core.shared.components.PoweredByCreditChe
 import com.creditchek.approval_android.core.theme.*
 import java.text.SimpleDateFormat
 import java.util.*
-import androidx.compose.ui.platform.LocalContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,13 +40,12 @@ fun BvnCheckScreen(
     var lastName by remember { mutableStateOf(initialUserData?.lastName ?: "") }
     var dob by remember { mutableStateOf(initialUserData?.dob ?: "") }
     var bvn by remember { mutableStateOf(initialUserData?.bvn ?: "") }
-    val context = LocalContext.current
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     // Native Android Date Picker Dialog
-    val calendar = Calendar.getInstance().apply {
-        add(Calendar.YEAR, -20) // default to ~20 years ago
-    }
+//    val calendar = Calendar.getInstance().apply {
+//        add(Calendar.YEAR, -20) // default to ~20 years ago
+//    }
 
     var showDatePicker by remember { mutableStateOf(false) }
 

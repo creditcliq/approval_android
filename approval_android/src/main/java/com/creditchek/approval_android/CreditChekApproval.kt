@@ -43,7 +43,7 @@ object CreditChekApproval {
      * Returns the standard ActivityResultContract for modern Jetpack Compose and Activity Result
      * API usage.
      */
-    fun contract(): ApprovalContract = ApprovalContract()
+//    fun contract(): ApprovalContract = ApprovalContract()
 
     /** Internal notifier called by ApprovalActivity when the flow completes. */
     internal fun notifyResult(result: SessionResult) {

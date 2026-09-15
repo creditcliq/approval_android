@@ -11,7 +11,7 @@ object ApiConstants {
     const val VALIDATE_PUBLIC_KEY = "auth/validate/public-key"
     const val CREATE_WIDGET_SESSION = "auth/widget-session/create"
     const val WIDGET_SESSION = "auth/widget-session"
-    const val SESSION_BVN_DATA = "auth/widget-session/bvn-data";
+    const val SESSION_BVN_DATA = "auth/widget-session/bvn-data"
     const val VERIFY_IDENTITY_DATA = "identity/verifyData"
     const val LIVENESS_HEALTH = "liveness/health"
     const val LIVENESS_VERIFY_CHALLENGE = "liveness/verify-challenge"
