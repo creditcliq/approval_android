@@ -1,6 +1,8 @@
-package com.creditchek.approval_android.features.identity.presentation.screens
+package com.creditchek.approval_android.features.liveliness.presentation.screens
 
 import android.Manifest
+import android.app.Activity
+import android.view.WindowManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.view.PreviewView
@@ -25,6 +27,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.creditchek.approval_android.core.engines.ApprovalTtsEngine
 import com.creditchek.approval_android.core.engines.LivelinessCameraEngine
 import com.creditchek.approval_android.core.engines.LivelinessState
@@ -46,22 +49,22 @@ fun LivelinessCameraScreen(
 ) {
 
     val context = LocalContext.current
-    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     val coroutineScope = rememberCoroutineScope()
 
     // 💡 Smile ID-Style Full Screen Brightness (Selfie Ring Light)
-    val activity = context as? android.app.Activity
+    val activity = context as? Activity
     DisposableEffect(activity) {
         val originalBrightness = activity?.window?.attributes?.screenBrightness
         activity?.window?.let { window ->
             val layoutParams = window.attributes
-            layoutParams.screenBrightness = android.view.WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_FULL
+            layoutParams.screenBrightness = WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_FULL
             window.attributes = layoutParams
         }
         onDispose {
             activity?.window?.let { window ->
                 val layoutParams = window.attributes
-                layoutParams.screenBrightness = originalBrightness ?: android.view.WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
+                layoutParams.screenBrightness = originalBrightness ?: WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
                 window.attributes = layoutParams
             }
         }
