@@ -17,6 +17,8 @@ okhttp = "5.5.0"
 coroutines = "1.11.0"
 retrofit = "3.0.0"
 coreSplashScreenVersion = "1.2.0"
+tensorflowLite = "2.16.1"
+
 
 
 [libraries]
@@ -46,6 +48,9 @@ androidx-camera-view = { group = "androidx.camera", name = "camera-view", versio
 
 # ML Kit Face Detection
 google-mlkit-face-detection = { group = "com.google.android.gms", name = "play-services-mlkit-face-detection", version.ref = "mlkitFaceDetection" }
+
+# TensorFlow Lite
+tensorflow-lite = { group = "org.tensorflow", name = "tensorflow-lite", version.ref = "tensorflowLite" }
 
 # Networking, Retrofit & Serialization
 okhttp-logging = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp" }
