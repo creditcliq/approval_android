@@ -107,7 +107,7 @@ fun LivelinessCameraScreen(
 
     // 👈 2. Voice Prompts triggered on step/guidance change
     LaunchedEffect(livenessState.guidance, livenessState.currentStep, livenessState.isFaceAligned) {
-        if (livenessState.isFaceAligned && livenessState.guidance.startsWith("Step ")) {
+        if (livenessState.isFaceAligned && (livenessState.guidance.startsWith("Step ") || livenessState.guidance.startsWith("Please remove"))) {
             ttsEngine.speak(livenessState.guidance)
         }
     }
@@ -175,7 +175,7 @@ fun LivelinessCameraScreen(
                     // Progress Ring Sweeping around the Oval Frame
                     val ringColor = when {
                         !livenessState.isFaceAligned -> ApprovalBlue
-                        livenessState.isLowLight || livenessState.isTooClose || livenessState.isTooFar -> ApprovalWarning
+                        livenessState.isLowLight || livenessState.isTooClose || livenessState.isTooFar || livenessState.hasGlasses || livenessState.hasHeadwear -> ApprovalWarning
                         else -> ApprovalSuccess
                     }
                     val bgGhost = if (livenessState.isFaceAligned) ringColor.copy(alpha = 0.20f) else null
@@ -194,9 +194,15 @@ fun LivelinessCameraScreen(
 
             Spacer(modifier = Modifier.size(50.dp))
 
-            // 3. Low Light / Distance / Eye Contact Banner
+            // 3. Low Light / Distance / Eye Contact / Accessory Banner
             if (livenessState.isLowLight) {
                 LowLightWarning()
+            } else if (livenessState.hasGlasses && livenessState.hasHeadwear) {
+                AccessoryWarning(text = "Please remove glasses & headwear")
+            } else if (livenessState.hasGlasses) {
+                AccessoryWarning(text = "Glasses detected — please remove glasses")
+            } else if (livenessState.hasHeadwear) {
+                AccessoryWarning(text = "Headwear detected — please remove hats/coverings")
             } else {
                 EyeContactWarning()
             }
@@ -206,7 +212,7 @@ fun LivelinessCameraScreen(
             // 4. Dynamic Guidance Instruction Text
             val guidanceColor = when {
                 !livenessState.isFaceAligned -> ApprovalTextSecondary
-                livenessState.isLowLight || livenessState.isTooClose || livenessState.isTooFar -> ApprovalWarning
+                livenessState.isLowLight || livenessState.isTooClose || livenessState.isTooFar || livenessState.hasGlasses || livenessState.hasHeadwear -> ApprovalWarning
                 else -> ApprovalBlue
             }
 
@@ -274,6 +280,32 @@ private fun EyeContactWarning() {
         Spacer(modifier = Modifier.width(6.dp))
         Text(
             text = "Keep your eyes on the camera throughout each step",
+            fontSize = 13.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = Color(0xFF8A5200),
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
+private fun AccessoryWarning(text: String) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Default.Warning,
+            contentDescription = null,
+            tint = ApprovalWarning,
+            modifier = Modifier.size(17.dp)
+        )
+        Spacer(modifier = Modifier.width(6.dp))
+        Text(
+            text = text,
             fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold,
             color = Color(0xFF8A5200),

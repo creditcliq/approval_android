@@ -34,6 +34,8 @@ data class LivelinessState(
     val isLowLight: Boolean = false,
     val isTooClose: Boolean = false,
     val isTooFar: Boolean = false,
+    val hasGlasses: Boolean = false,
+    val hasHeadwear: Boolean = false,
     val currentStepIndex: Int = 0,
     val currentStep: FaceVerificationStep = FaceVerificationStep.STILLNESS,
     val totalSteps: Int = 8,
@@ -123,8 +125,19 @@ class LivelinessCameraEngine(
     private var initialFaceWidth: Float? = null
     private var isEvaluatingStep = false
 
+    // On-Device Face Accessory Classifier (Glasses & Headwear)
+    private var accessoryClassifier: AccessoryClassifierEngine? = null
+    private var lastAccessoryCheckAt: Long = 0L
+    private val accessoryCheckIntervalMs = 300L
+    private var isClassifyingAccessory = false
+    private var detectedGlasses = false
+    private var detectedHeadwear = false
+
     fun startCamera(context: Context, lifecycleOwner: LifecycleOwner, previewView: PreviewView) {
         this.previewViewRef = previewView
+        if (accessoryClassifier == null) {
+            accessoryClassifier = AccessoryClassifierEngine(context.applicationContext)
+        }
         val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
 
         cameraProviderFuture.addListener({
@@ -291,6 +304,87 @@ class LivelinessCameraEngine(
         if (completedStepCount >= verificationSteps.size) return
 
         val step = verificationSteps[completedStepCount]
+
+        // ── On-Device Face Accessory Classifier (Glasses & Headwear Gate) ──
+        if (step != FaceVerificationStep.STILLNESS) {
+            detectedGlasses = false
+            detectedHeadwear = false
+        } else if (accessoryClassifier != null && !isClassifyingAccessory && (now - lastAccessoryCheckAt >= accessoryCheckIntervalMs)) {
+            lastAccessoryCheckAt = now
+            isClassifyingAccessory = true
+            val previewBitmap = previewViewRef?.bitmap
+            if (previewBitmap != null) {
+                coroutineScope.launch(Dispatchers.Default) {
+                    try {
+                        val result = accessoryClassifier?.classify(previewBitmap)
+                        if (result != null) {
+                            detectedGlasses = result.hasGlasses
+                            detectedHeadwear = result.hasHeadwear
+                        }
+                    } catch (e: Exception) {
+                        Log.w("LivelinessCameraEngine", "Accessory classification failed", e)
+                    } finally {
+                        isClassifyingAccessory = false
+                    }
+                }
+            } else {
+                isClassifyingAccessory = false
+            }
+        }
+
+        if (detectedGlasses && detectedHeadwear) {
+            stillnessStartedAt = null
+            lastStillnessMatchAt = 0L
+            matchingFrames = 0
+            state = state.copy(
+                isFaceAligned = true,
+                isLowLight = isLowLight,
+                isTooClose = false,
+                isTooFar = false,
+                hasGlasses = true,
+                hasHeadwear = true,
+                currentStepIndex = completedStepCount,
+                verificationProgress = calculateProgress(0f),
+                guidance = "Please remove glasses and head coverings"
+            )
+            return
+        }
+
+        if (detectedGlasses) {
+            stillnessStartedAt = null
+            lastStillnessMatchAt = 0L
+            matchingFrames = 0
+            state = state.copy(
+                isFaceAligned = true,
+                isLowLight = isLowLight,
+                isTooClose = false,
+                isTooFar = false,
+                hasGlasses = true,
+                hasHeadwear = false,
+                currentStepIndex = completedStepCount,
+                verificationProgress = calculateProgress(0f),
+                guidance = "Please remove your glasses to continue"
+            )
+            return
+        }
+
+        if (detectedHeadwear) {
+            stillnessStartedAt = null
+            lastStillnessMatchAt = 0L
+            matchingFrames = 0
+            state = state.copy(
+                isFaceAligned = true,
+                isLowLight = isLowLight,
+                isTooClose = false,
+                isTooFar = false,
+                hasGlasses = false,
+                hasHeadwear = true,
+                currentStepIndex = completedStepCount,
+                verificationProgress = calculateProgress(0f),
+                guidance = "Please remove hats or head coverings"
+            )
+            return
+        }
 
         // ── Motion & Angular Velocity Tracking ──
         val curX = face.headEulerAngleX
@@ -469,6 +563,8 @@ class LivelinessCameraEngine(
                 isLowLight = isLowLight,
                 isTooClose = false,
                 isTooFar = false,
+                hasGlasses = false,
+                hasHeadwear = false,
                 currentStepIndex = completedStepCount,
                 currentStep = step,
                 verificationProgress = calculateProgress(stepProgress),
@@ -546,9 +642,14 @@ class LivelinessCameraEngine(
         prevEulerY = null
         prevEulerZ = null
         stepAvailableAt = System.currentTimeMillis() + stepTransitionGraceMs
+        detectedGlasses = false
+        detectedHeadwear = false
+        accessoryClassifier?.resetState()
     }
 
     fun release() {
         detector.close()
+        accessoryClassifier?.close()
+        accessoryClassifier = null
     }
 }

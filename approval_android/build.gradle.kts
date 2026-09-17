@@ -28,6 +28,10 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 
+    androidResources {
+        noCompress += "tflite"
+    }
+
     //Configure publishing to export release AAR with transitive dependencies
     publishing {
         singleVariant("release") {
@@ -80,6 +84,9 @@ dependencies {
 
     // ML Kit Face Detection
     implementation(libs.google.mlkit.face.detection)
+
+    // TensorFlow Lite
+    implementation(libs.tensorflow.lite)
 
     // Networking (Retrofit) & Coroutines
     implementation(libs.retrofit)

@@ -1,0 +1,29 @@
+{
+  "labels": [
+    "glasses",
+    "headwear"
+  ],
+  "thresholds": [
+    0.25,
+    0.65
+  ],
+  "activationThresholds": [
+    0.25,
+    0.65
+  ],
+  "releaseThresholds": [
+    0.15,
+    0.45
+  ],
+  "inputSize": 160,
+  "inputType": "uint8",
+  "outputType": "uint8",
+  "outputScale": 0.00390625,
+  "outputZeroPoint": 0,
+  "trainingSamples": {
+    "train": 1029,
+    "validation": 207,
+    "test": 66
+  },
+  "modelBytes": 817000
+}

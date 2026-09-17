@@ -128,8 +128,8 @@ fun DemoAppScreen() {
                             environment = ApprovalEnv.SANDBOX,
                             modules = listOf(ApprovalModule.IDENTITY, ApprovalModule.LIVELINESS),
                             userData = AUserData(
-                                firstName = "John",
-                                lastName = "Doe",
+                                firstName = "Marvellous",
+                                lastName = "Ogbo",
                                 email = "johndoe@example.com",
                                 dob = "03/09/2002",
                                 bvn = "22577700013"
