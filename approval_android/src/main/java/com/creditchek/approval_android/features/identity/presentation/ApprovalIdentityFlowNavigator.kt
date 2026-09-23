@@ -90,6 +90,7 @@ fun ApprovalFlowNavigator(
     var finalVerificationPassed by remember { mutableStateOf(false) }
     var isRetryFlow by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
+    var errorTitle by remember { mutableStateOf("") }
     var mismatchDialogMessage by remember { mutableStateOf<String?>(null) }
     var isFirstCallSuccess by remember { mutableStateOf(false) }
 
@@ -150,6 +151,8 @@ fun ApprovalFlowNavigator(
                 ApprovalStep.Identity.SPLASH -> {
                     SplashScreen(
                         validateAction = {
+
+
                             val result = repository.validatePublicKey(config.publicKey)
                             result.map { keyData ->
                                 sessionContext = sessionContext.copy(
@@ -159,7 +162,28 @@ fun ApprovalFlowNavigator(
                             }
                         },
                         onValidationSuccess = {
-                            currentStep = ApprovalStep.Identity.WELCOME
+                            coroutineScope.launch {
+                                val createResult = repository.getWidgetSession(
+                                    secretKey = config.publicKey,
+                                    sessionId = config.sessionId
+                                )
+
+                                createResult.onSuccess { data ->
+
+                                    currentStep =
+                                        if (data.services.bvn.status != Status.COMPLETED)
+                                            ApprovalStep.Identity.WELCOME
+                                        else
+                                            ApprovalStep.Liveliness.PHOTO_INTRO
+                                }
+                                createResult.onFailure { error ->
+                                    val displayMsg = error.message?.takeIf { it.isNotBlank() }
+                                        ?: "Unknown error occurred"
+                                    errorMessage = displayMsg
+                                    errorTitle = "Invalid Widget Session"
+                                    currentStep = ApprovalStep.Identity.ERROR
+                                }
+                            }
                         },
                         onValidationError = { msg ->
                             currentStep = ApprovalStep.Identity.ERROR
@@ -175,21 +199,23 @@ fun ApprovalFlowNavigator(
                         onStartVerification = {
                             coroutineScope.launch {
                                 isWelcomeLoading = true
-                                val clientSessionId = createSessionId()
+//                                val clientSessionId = createSessionId()
 
-                                val createResult = repository.createSession(
-                                    publicKey = config.publicKey,
-                                    sessionId = clientSessionId
+                                val createResult = repository.getWidgetSession(
+                                    secretKey = config.publicKey,
+                                    sessionId = config.sessionId
                                 )
 
                                 createResult.onSuccess { sessionData ->
                                     sessionContext =
-                                        sessionContext.copy(sessionId = sessionData.sessionId)
+                                        sessionContext.copy(sessionId = config.sessionId)
                                     isWelcomeLoading = false
                                     currentStep = ApprovalStep.Identity.BVN_CHECK
                                 }.onFailure { error ->
                                     isWelcomeLoading = false
-                                    toastState.show(error.message ?: "Unknown error")
+                                    val displayMsg = error.message?.takeIf { it.isNotBlank() }
+                                        ?: "Unknown error occurred"
+                                    toastState.show(displayMsg)
                                 }
                             }
                         },
@@ -208,13 +234,14 @@ fun ApprovalFlowNavigator(
                                 isBvnLoading = true
 
 
-                                val bvnResult = if(isFirstCallSuccess)  repository.getSessionBvnData(
-                                    sessionId = sessionContext.sessionId,
-                                    secretKey = sessionContext.secretKey
-                                ) else repository.verifyBvn(
-                                    secretKey = sessionContext.secretKey,
-                                    bvn = bvn,
-                                )
+                                val bvnResult =
+                                    if (isFirstCallSuccess) repository.getSessionBvnData(
+                                        sessionId = sessionContext.sessionId,
+                                        secretKey = sessionContext.secretKey
+                                    ) else repository.verifyBvn(
+                                        secretKey = sessionContext.secretKey,
+                                        bvn = bvn,
+                                    )
 
                                 bvnResult.onSuccess { details ->
 
@@ -242,11 +269,12 @@ fun ApprovalFlowNavigator(
 
                                         isBvnLoading = false
 
-                                        currentStep = if (config.modules.contains(ApprovalModule.LIVELINESS)) {
-                                            ApprovalStep.Liveliness.PHOTO_INTRO
-                                        } else {
-                                            ApprovalStep.Identity.SUCCESS
-                                        }
+                                        currentStep =
+                                            if (config.modules.contains(ApprovalModule.LIVELINESS)) {
+                                                ApprovalStep.Liveliness.PHOTO_INTRO
+                                            } else {
+                                                ApprovalStep.Identity.SUCCESS
+                                            }
                                     } else {
                                         repository.updateSessionWithBvn(
                                             sessionId = sessionContext.sessionId,
@@ -307,13 +335,15 @@ fun ApprovalFlowNavigator(
                 ApprovalStep.Identity.ERROR -> {
                     val displayMessage =
                         errorMessage.ifBlank { ApprovalErrorDefaults.INVALID_PUBLIC_KEY_MESSAGE }
+                    val title =
+                        errorTitle.ifBlank { ApprovalErrorDefaults.INVALID_PUBLIC_KEY_TITLE }
                     ApprovalErrorScreen(
-                        title = ApprovalErrorDefaults.INVALID_PUBLIC_KEY_TITLE,
+                        title = title,
                         message = displayMessage,
                         onDismiss = {
                             onFinishWithResult(
                                 SessionResult.Error(
-                                    code = "INVALID_PUBLIC_KEY",
+                                    code = "ERROR",
                                     message = displayMessage
                                 )
                             )
@@ -337,17 +367,14 @@ fun ApprovalFlowNavigator(
                                 sessionContext = sessionContext.copy(
                                     secretKey = keyData.app.liveSecretKey,
                                     businessName = keyData.app.appName,
-                                    sessionId = config.sessionId ?: ""
+                                    sessionId = config.sessionId
                                 )
                             }
                         },
                         onValidationSuccess = {
                             coroutineScope.launch {
                                 try {
-//                                    repository.getWidgetSession(
-//                                        sessionId = config.sessionId ?: "",
-//                                        secretKey = sessionContext.secretKey
-//                                    )
+//
                                     val result = repository.getSessionBvnData(
                                         sessionId = sessionContext.sessionId,
                                         secretKey = sessionContext.secretKey
@@ -355,20 +382,21 @@ fun ApprovalFlowNavigator(
                                     result.onSuccess { details ->
                                         sessionContext = sessionContext.copy(bvnDetails = details)
 
-                                        currentStep =
-                                            if (sessionContext.bvnDetails?.photo != null) {
-
-                                                ApprovalStep.Liveliness.PHOTO_INTRO
-                                            } else {
-                                                ApprovalStep.Identity.BVN_CHECK
-                                            }
+//                                        currentStep =
+//                                            if (sessionContext.bvnDetails?.photo != null) {
+//
+//                                                ApprovalStep.Liveliness.PHOTO_INTRO
+//                                            } else {
+//                                                ApprovalStep.Identity.BVN_CHECK
+//                                            }
 
                                     }
                                     result.onFailure { error ->
-                                        toastState.show(
-                                            error.message
-                                                ?: "BVN verification failed. Please check and try again"
-                                        )
+                                        val displayMsg = error.message?.takeIf { it.isNotBlank() }
+                                            ?: "Unknown error occurred"
+                                        errorMessage = displayMsg
+                                        errorTitle = "Invalid Widget Session"
+                                        currentStep = ApprovalStep.Liveliness.ERROR
                                     }
                                 } catch (_: Exception) {
                                     // Error handled during verification if session is invalid
@@ -388,11 +416,7 @@ fun ApprovalFlowNavigator(
                 ApprovalStep.Liveliness.PHOTO_INTRO -> {
                     PhotoCaptureIntroScreen(
                         onDismiss = {
-                            if (ApprovalModule.IDENTITY in config.modules) {
-                                currentStep = ApprovalStep.Identity.BVN_CHECK
-                            } else {
-                                onFinishWithResult(SessionResult.Cancelled)
-                            }
+                            onFinishWithResult(SessionResult.Cancelled)
                         },
                         isLoading = isIntroLoading,
                         onProceed = {
@@ -522,13 +546,15 @@ fun ApprovalFlowNavigator(
                 ApprovalStep.Liveliness.ERROR -> {
                     val displayMessage =
                         errorMessage.ifBlank { ApprovalErrorDefaults.INVALID_PUBLIC_KEY_MESSAGE }
+                    val title =
+                        errorTitle.ifBlank { ApprovalErrorDefaults.INVALID_PUBLIC_KEY_TITLE }
                     ApprovalErrorScreen(
-                        title = ApprovalErrorDefaults.INVALID_PUBLIC_KEY_TITLE,
+                        title = title,
                         message = displayMessage,
                         onDismiss = {
                             onFinishWithResult(
                                 SessionResult.Error(
-                                    code = "INVALID_PUBLIC_KEY",
+                                    code = "ERROR",
                                     message = displayMessage
                                 )
                             )
@@ -560,7 +586,7 @@ fun ApprovalFlowNavigator(
                 )
             },
             confirmButton = {
-                Column (verticalArrangement = Arrangement.spacedBy(8.dp)){
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     ApprovalButton(
                         text = "Try Again",
                         onClick = { mismatchDialogMessage = null }
@@ -658,13 +684,13 @@ private fun isDateMatching(inputDob: String, bvnDob: String?): Boolean {
                 cleanInput.replace("/", "-").equals(cleanBvn.replace("/", "-"), ignoreCase = true)
     }
 }
-
-private const val SESSION_ID_LENGTH = 16
-private const val CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-private val secureRandom = SecureRandom()
-
-fun createSessionId(): String {
-    return (1..SESSION_ID_LENGTH)
-        .map { CHARACTERS[secureRandom.nextInt(CHARACTERS.length)] }
-        .joinToString("")
-}
+//
+//private const val SESSION_ID_LENGTH = 16
+//private const val CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+//private val secureRandom = SecureRandom()
+//
+//fun createSessionId(): String {
+//    return (1..SESSION_ID_LENGTH)
+//        .map { CHARACTERS[secureRandom.nextInt(CHARACTERS.length)] }
+//        .joinToString("")
+//}

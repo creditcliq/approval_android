@@ -7,6 +7,7 @@ import com.creditchek.approval_android.features.liveliness.data.models.Challenge
 import com.creditchek.approval_android.features.liveliness.data.models.ValidationData
 import org.json.JSONObject
 import retrofit2.HttpException
+import retrofit2.Response
 
 class IdentityRepository(
     environment: ApprovalEnv = ApprovalEnv.SANDBOX
@@ -72,21 +73,28 @@ class IdentityRepository(
             )
         )
         if (!response.isSuccessful) {
-            throw Exception("Failed to update widget session")
+//            throw Exception("Failed to update widget session")
+            val errorMessage =
+                response.extractErrorMessage(fallback = "Failed to update widget session")
+            throw Exception(errorMessage)
         }
     }
 
     // ── 5. Get Widget Session ──
-//    suspend fun getWidgetSession(sessionId: String, secretKey: String) {
-//        val response = api.getWidgetSession(
-//            sessionId = sessionId,
-//            secretKey = secretKey,
-//        )
-//
-//        if (!response.isSuccessful) {
-//            throw Exception("Failed to get widget session")
-//        }
-//    }
+    suspend fun getWidgetSession(sessionId: String, secretKey: String): Result<SessionCreatedData> =
+        safeApiCall("Get widget session") {
+            val response = api.getWidgetSession(
+                sessionId = sessionId.trim(), secretKey = secretKey.trim()
+            )
+
+            if (response.success && response.data != null) {
+                response.data
+            } else {
+                val errorMessage = response.message ?: "Failed to fetch widget session"
+                throw Exception(errorMessage)
+            }
+
+        }
 
     // ── 6. Verify Liveness Challenge ──
     suspend fun verifyChallenge(
@@ -111,18 +119,18 @@ class IdentityRepository(
     }
 
     // 7. Get Session BVN Data
-    suspend fun getSessionBvnData(sessionId: String, secretKey: String): Result<BvnDetails> = safeApiCall("Get session bvn data") {
-        val response = api.getSessionBvnData(
-            sessionId = sessionId,
-            secretKey = secretKey,
-        )
-        if (response.isSuccessful && response.data != null) {
-            response.data
-        } else {
-            throw Exception(response.message ?: "Failed to fetch bvn data")
+    suspend fun getSessionBvnData(sessionId: String, secretKey: String): Result<BvnDetails> =
+        safeApiCall("Get session bvn data") {
+            val response = api.getSessionBvnData(
+                sessionId = sessionId,
+                secretKey = secretKey,
+            )
+            if (response.isSuccessful && response.data != null) {
+                response.data
+            } else {
+                throw Exception(response.message ?: "Failed to fetch bvn data")
+            }
         }
-    }
-
 
 
     //Returns string as the status
@@ -169,4 +177,27 @@ class IdentityRepository(
             null
         }
     }
+
+    private fun <T> Response<T>.extractErrorMessage(fallback: String = "Request failed"): String {
+        return try {
+            val errorJson = errorBody()?.string()
+            if (!errorJson.isNullOrBlank()) {
+                val jsonObject = JSONObject(errorJson)
+                when {
+                    jsonObject.has("message") && jsonObject.getString("message").isNotBlank() ->
+                        jsonObject.getString("message")
+
+                    jsonObject.has("error") && jsonObject.getString("error").isNotBlank() ->
+                        jsonObject.getString("error")
+
+                    else -> fallback
+                }
+            } else {
+                message().takeIf { it.isNotBlank() } ?: fallback
+            }
+        } catch (_: Exception) {
+            fallback
+        }
+    }
+
 }

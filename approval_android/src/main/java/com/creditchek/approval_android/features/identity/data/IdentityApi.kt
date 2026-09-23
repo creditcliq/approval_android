@@ -37,7 +37,7 @@ interface IdentityApi {
     suspend fun getWidgetSession(
         @Path("sessionId") sessionId: String,
         @Header("token") secretKey: String
-    ): Response<Map<String, Any>>
+    ): SessionCreatedResponse
 
     @POST(ApiConstants.VERIFY_IDENTITY_DATA)
     suspend fun verifyBvnData(

@@ -127,6 +127,8 @@ fun DemoAppScreen() {
                             publicKey = "vy6LZWI/l/pOc868z8LAgEBCdvsSomPev2TxLqIdlNZIueMM0Agl8G88zxyE65LN",
                             environment = ApprovalEnv.SANDBOX,
                             modules = listOf(ApprovalModule.IDENTITY, ApprovalModule.LIVELINESS),
+//                            sessionId = "411585d4-1758-4b1e-965e-567dd67ba96c",
+                            sessionId = "qwertyuioplkjhgfdsa",
                             userData = AUserData(
                                 firstName = "Marvellous",
                                 lastName = "Ogbo",
