@@ -34,6 +34,22 @@ data class SessionCreatedResponse(
 data class SessionCreatedData(
     @SerializedName("publicKey") val publicKey: String,
     @SerializedName("sessionId") val sessionId: String,
+    @SerializedName("status") val status: String,
+    @SerializedName("services") val services: Services,
     @SerializedName("_id") val id: String,
     @SerializedName("expiresAt") val expiresAt: String?
+)
+
+
+data class Services(
+    @SerializedName("bvn")
+    val bvn: ServiceStatus,
+
+    @SerializedName("liveness")
+    val liveness: ServiceStatus
+)
+
+data class ServiceStatus(
+    @SerializedName("status")
+    val status: Status
 )

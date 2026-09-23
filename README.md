@@ -34,7 +34,7 @@ In your module `app/build.gradle.kts`:
 
 ```kotlin
 dependencies {
-    implementation("com.github.creditcliq:approval_android:1.0.0")
+    implementation("com.github.creditcliq:approval_android:1.0.0+1")
 }
 ```
 
@@ -69,6 +69,9 @@ In `app/proguard-rules.pro`:
 
 ## 💡 Usage
 
+> [!IMPORTANT]
+> **Prerequisite**: Generate a `sessionId` on your server first by calling CreditChek's Widget Session API (`POST /v1/auth/widget-session/create`). Pass that `sessionId` into `ApprovalConfig`.
+
 ### A. Jetpack Compose (Recommended)
 
 ```kotlin
@@ -81,7 +84,7 @@ import com.creditchek.approval_android.core.session.AUserData
 import com.creditchek.approval_android.core.session.SessionResult
 
 @Composable
-fun IdentityVerificationScreen() {
+fun IdentityVerificationScreen(backendSessionId: String) {
     val approvalLauncher = rememberLauncherForActivityResult(
         contract = CreditChekApproval.contract()
     ) { result ->
@@ -103,6 +106,7 @@ fun IdentityVerificationScreen() {
     Button(onClick = {
         val config = ApprovalConfig(
             publicKey = "YOUR_CREDITCHEK_PUBLIC_KEY",
+            sessionId = backendSessionId, // Obtained from your backend
             environment = ApprovalEnv.SANDBOX, // or ApprovalEnv.PRODUCTION
             userData = AUserData(
                 firstName = "John",
@@ -131,6 +135,7 @@ CreditChekApproval.start(
     context = this,
     config = ApprovalConfig(
         publicKey = "YOUR_CREDITCHEK_PUBLIC_KEY",
+        sessionId = backendSessionId, // Obtained from your backend
         environment = ApprovalEnv.SANDBOX
     )
 ) { result ->
@@ -150,16 +155,30 @@ CreditChekApproval.start(
 
 ---
 
-## 🛠 Local Development & Flutter Plugin Testing
+## 🚀 Publishing & Distribution (GitHub & JitPack)
 
-If you are developing features in this SDK and testing them inside `approval_flutter`:
+This library is published via JitPack from the GitHub repository `https://github.com/creditcliq/approval_android`.
 
-```bash
-# Make Gradle wrapper executable
-chmod +x gradlew
+### How to Release a New Version:
+1. Update `version` in `approval_android/build.gradle.kts`:
+   ```kotlin
+   version = "1.0.1" // or new version / tag
+   ```
+2. Commit and push your changes to GitHub:
+   ```bash
+   git add .
+   git commit -m "Release v1.0.1"
+   git push origin main
+   ```
+3. Tag the release and push:
+   ```bash
+   git tag 1.0.1
+   git push origin 1.0.1
+   ```
+4. Verify the build at [https://jitpack.io/#creditcliq/approval_android](https://jitpack.io/#creditcliq/approval_android).
+5. Consumers (including `approval_flutter`) update their dependency:
+   ```kotlin
+   implementation("com.github.creditcliq:approval_android:1.0.1")
+   ```
 
-# Publish SDK to local Maven repository (~/.m2/repository)
-./gradlew :approval_android:publishToMavenLocal
-```
-
-For a comprehensive guide on building AARs, composite builds, and continuous testing in Flutter, see **[ANDROID_FLUTTER_GUIDE.md](../approval_flutter/ANDROID_FLUTTER_GUIDE.md)**.
+For local testing workflows, see **[ANDROID_FLUTTER_GUIDE.md](../approval_flutter/ANDROID_FLUTTER_GUIDE.md)**.

@@ -124,16 +124,9 @@ fun DemoAppScreen() {
                     CreditChekApproval.start(
                         context = context,
                         config = ApprovalConfig(
-                            publicKey = "vy6LZWI/l/pOc868z8LAgEBCdvsSomPev2TxLqIdlNZIueMM0Agl8G88zxyE65LN",
-                            environment = ApprovalEnv.SANDBOX,
-                            modules = listOf(ApprovalModule.IDENTITY, ApprovalModule.LIVELINESS),
-                            userData = AUserData(
-                                firstName = "Marvellous",
-                                lastName = "Ogbo",
-                                email = "johndoe@example.com",
-                                dob = "03/09/2002",
-                                bvn = "22577700013"
-                            )
+                           publicKey = "your-business-public-key",
+                            modules = listOf(),
+                            sessionId = "session-id-from-your-backend",
                         )
                     ) { result ->
                         when (result) {
