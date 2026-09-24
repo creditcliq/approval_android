@@ -49,7 +49,7 @@ afterEvaluate {
                 from(components["release"])
                 groupId = "com.github.creditcliq"
                 artifactId = "approval_android"
-                version = "1.0.0+2"
+                version = "1.0.1"
             }
         }
     }
