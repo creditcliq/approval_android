@@ -117,8 +117,6 @@ fun DemoAppScreen() {
                     sessionStatus = "Verification in progress..."
                     statusColor = Color(0xFF064BEF)
 
-                    val publicKey =
-                        "vy6LZWI/l/pOc868z8LAgEBCdvsSomPev2TxLqIdlNZIueMM0Agl8G88zxyE65LN"
 
                     // 👉 Launch the SDK with 1 line of code:
                     CreditChekApproval.start(
@@ -127,7 +125,7 @@ fun DemoAppScreen() {
                             publicKey = publicKey,
                             environment = ApprovalEnv.PRODUCTION,
                             modules = listOf(ApprovalModule.IDENTITY, ApprovalModule.LIVELINESS),
-                            sessionId = "31c48046-6943-4d21-9886-1b0f318781b9",
+                            sessionId = "sessionId",
                         )
                     ) { result ->
                         when (result) {
