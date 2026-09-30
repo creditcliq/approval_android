@@ -111,7 +111,7 @@ In your module `app/build.gradle.kts`:
 
 ```kotlin
 dependencies {
-    implementation("com.github.creditcliq:approval_android:1.0.1")
+    implementation("com.github.creditcliq:approval_android:1.0.2")
 }
 ```
 
