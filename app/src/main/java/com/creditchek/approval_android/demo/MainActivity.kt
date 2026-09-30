@@ -122,7 +122,7 @@ fun DemoAppScreen() {
                     CreditChekApproval.start(
                         context = context,
                         config = ApprovalConfig(
-                            publicKey = publicKey,
+                            publicKey = "your-public-key",
                             environment = ApprovalEnv.PRODUCTION,
                             modules = listOf(ApprovalModule.IDENTITY, ApprovalModule.LIVELINESS),
                             sessionId = "sessionId",
