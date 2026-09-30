@@ -14,6 +14,9 @@ data class AUserData(
     @SerializedName("bvn")
     val bvn: String = "",
 
+    @SerializedName("nin")
+    val nin: String = "",
+
     @SerializedName("email")
     val email: String = "",
 

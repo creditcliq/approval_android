@@ -10,7 +10,7 @@ import retrofit2.HttpException
 import retrofit2.Response
 
 class IdentityRepository(
-    environment: ApprovalEnv = ApprovalEnv.SANDBOX
+    environment: ApprovalEnv = ApprovalEnv.PRODUCTION
 ) {
     private val api: IdentityApi =
         RetrofitClient.createService(IdentityApi::class.java, environment)
@@ -57,11 +57,26 @@ class IdentityRepository(
             }
         }
 
-    // ── 4. Update Widget Session with BVN ──
-    suspend fun updateSessionWithBvn(
+    // ── 3b. Verify NIN ──
+    suspend fun verifyNin(secretKey: String, nin: String): Result<NinDetails> =
+        safeApiCall("NIN verification") {
+            val response = api.verifyNinData(
+                secretKey = secretKey.trim(), nin = nin.trim()
+            )
+
+            if (response.isSuccessful && response.data != null) {
+                response.data
+            } else {
+                throw Exception(response.message ?: "Failed to verify NIN")
+            }
+        }
+
+    // ── 4. Update Widget Session ──
+    suspend fun updateSession(
         sessionId: String,
         secretKey: String,
         bvn: String? = null,
+        nin: String? = null,
         status: Status? = null,
         service: Service? = null
     ): Result<Unit> = safeApiCall("Session update") {
@@ -69,16 +84,29 @@ class IdentityRepository(
             sessionId = sessionId.trim(),
             secretKey = secretKey.trim(),
             request = UpdateSessionRequest(
-                bvn = bvn?.trim(), status = status, service = service
+                bvn = bvn?.trim(), nin = nin?.trim(), status = status, service = service
             )
         )
         if (!response.isSuccessful) {
-//            throw Exception("Failed to update widget session")
             val errorMessage =
                 response.extractErrorMessage(fallback = "Failed to update widget session")
             throw Exception(errorMessage)
         }
     }
+
+    suspend fun updateSessionWithBvn(
+        sessionId: String,
+        secretKey: String,
+        bvn: String? = null,
+        status: Status? = null,
+        service: Service? = null
+    ): Result<Unit> = updateSession(
+        sessionId = sessionId,
+        secretKey = secretKey,
+        bvn = bvn,
+        status = status,
+        service = service
+    )
 
     // ── 5. Get Widget Session ──
     suspend fun getWidgetSession(sessionId: String, secretKey: String): Result<SessionCreatedData> =
@@ -103,7 +131,9 @@ class IdentityRepository(
         step: String,
         sessionId: String,
         frame: String,
-        restart: Boolean = false
+        restart: Boolean = false,
+        idType: String? = null,
+        environment: String? = null
     ): Result<ValidationData> = safeApiCall("Challenge verification") {
         val normanizedToken = accessToken.trim()
         val response = api.verifyChallenge(
@@ -112,7 +142,9 @@ class IdentityRepository(
                 step = step,
                 sessionId = sessionId,
                 frame = frame,
-                restart = restart
+                restart = restart,
+                idType = idType,
+                environment = environment
             )
         )
         response.data ?: throw Exception(response.message ?: "Challenge verification failed")
@@ -129,6 +161,20 @@ class IdentityRepository(
                 response.data
             } else {
                 throw Exception(response.message ?: "Failed to fetch bvn data")
+            }
+        }
+
+    // 8. Get Session NIN Data
+    suspend fun getSessionNinData(sessionId: String, secretKey: String): Result<NinDetails> =
+        safeApiCall("Get session nin data") {
+            val response = api.getSessionNinData(
+                sessionId = sessionId,
+                secretKey = secretKey,
+            )
+            if (response.isSuccessful && response.data != null) {
+                response.data
+            } else {
+                throw Exception(response.message ?: "Failed to fetch nin data")
             }
         }
 

@@ -26,7 +26,9 @@ import com.creditchek.approval_android.features.identity.data.models.Status
 import com.creditchek.approval_android.features.identity.presentation.screens.ApprovalErrorDefaults
 import com.creditchek.approval_android.features.identity.presentation.screens.ApprovalErrorScreen
 import com.creditchek.approval_android.features.identity.presentation.screens.BvnCheckScreen
+import com.creditchek.approval_android.features.identity.presentation.screens.NinCheckScreen
 import com.creditchek.approval_android.features.identity.presentation.screens.SplashScreen
+import com.creditchek.approval_android.features.identity.presentation.screens.VerificationMethodScreen
 import com.creditchek.approval_android.features.identity.presentation.screens.VerificationSuccessScreen
 import com.creditchek.approval_android.features.identity.presentation.screens.WelcomeScreen
 import com.creditchek.approval_android.features.liveliness.data.models.FaceVerificationStep
@@ -85,6 +87,7 @@ fun ApprovalFlowNavigator(
 
     var isWelcomeLoading by remember { mutableStateOf(false) }
     var isBvnLoading by remember { mutableStateOf(false) }
+    var isNinLoading by remember { mutableStateOf(false) }
     var isIntroLoading by remember { mutableStateOf(false) }
     var retryReason by remember { mutableStateOf("No obstructions: remove hats,\nglasses and masks") }
     var finalVerificationPassed by remember { mutableStateOf(false) }
@@ -93,6 +96,7 @@ fun ApprovalFlowNavigator(
     var errorTitle by remember { mutableStateOf("") }
     var mismatchDialogMessage by remember { mutableStateOf<String?>(null) }
     var isFirstCallSuccess by remember { mutableStateOf(false) }
+    val isDevelopment = config.environment.isDevelopment
 
     BackHandler {
         when (currentStep) {
@@ -103,12 +107,27 @@ fun ApprovalFlowNavigator(
                 onFinishWithResult(SessionResult.Cancelled)
             }
 
-            ApprovalStep.Identity.BVN_CHECK -> {
+            ApprovalStep.Identity.VERIFICATION_METHOD -> {
                 currentStep = ApprovalStep.Identity.WELCOME
             }
 
+            ApprovalStep.Identity.BVN_CHECK,
+            ApprovalStep.Identity.NIN_CHECK -> {
+                val hasBvn = sessionContext.services?.bvn != null
+                val hasNin = sessionContext.services?.nin != null
+                if (hasBvn && hasNin) {
+                    currentStep = ApprovalStep.Identity.VERIFICATION_METHOD
+                } else {
+                    currentStep = ApprovalStep.Identity.WELCOME
+                }
+            }
+
             ApprovalStep.Identity.LIVELINESS -> {
-                currentStep = ApprovalStep.Identity.BVN_CHECK
+                currentStep = if (sessionContext.selectedIdType == "NIN") {
+                    ApprovalStep.Identity.NIN_CHECK
+                } else {
+                    ApprovalStep.Identity.BVN_CHECK
+                }
             }
 
             ApprovalStep.Identity.SUCCESS -> {
@@ -123,7 +142,17 @@ fun ApprovalFlowNavigator(
 
             ApprovalStep.Liveliness.PHOTO_INTRO -> {
                 if (ApprovalModule.IDENTITY in config.modules) {
-                    currentStep = ApprovalStep.Identity.BVN_CHECK
+                    val isBvnCompleted = sessionContext.services?.bvn?.status == Status.COMPLETED
+                    val isNinCompleted = sessionContext.services?.nin?.status == Status.COMPLETED
+                    if (!isBvnCompleted && !isNinCompleted) {
+                        currentStep = if (sessionContext.selectedIdType == "NIN") {
+                            ApprovalStep.Identity.NIN_CHECK
+                        } else {
+                            ApprovalStep.Identity.BVN_CHECK
+                        }
+                    } else {
+                        onFinishWithResult(SessionResult.Cancelled)
+                    }
                 } else {
                     onFinishWithResult(SessionResult.Cancelled)
                 }
@@ -151,8 +180,6 @@ fun ApprovalFlowNavigator(
                 ApprovalStep.Identity.SPLASH -> {
                     SplashScreen(
                         validateAction = {
-
-
                             val result = repository.validatePublicKey(config.publicKey)
                             result.map { keyData ->
                                 sessionContext = sessionContext.copy(
@@ -169,12 +196,36 @@ fun ApprovalFlowNavigator(
                                 )
 
                                 createResult.onSuccess { data ->
+                                    sessionContext = sessionContext.copy(services = data.services)
+                                    val isBvnCompleted = data.services.bvn?.status == Status.COMPLETED
+                                    val isNinCompleted = data.services.nin?.status == Status.COMPLETED
+                                    val isIdentityCompleted = isBvnCompleted || isNinCompleted
+                                    val isLivenessCompleted = data.services.liveness?.status == Status.COMPLETED
+                                    val needsIdentity = ApprovalModule.IDENTITY in config.modules && !isIdentityCompleted
+                                    val needsLiveness = ApprovalModule.LIVELINESS in config.modules && !isLivenessCompleted
 
-                                    currentStep =
-                                        if (data.services.bvn.status != Status.COMPLETED)
-                                            ApprovalStep.Identity.WELCOME
-                                        else
-                                            ApprovalStep.Liveliness.PHOTO_INTRO
+                                    if (needsIdentity) {
+                                        currentStep = ApprovalStep.Identity.WELCOME
+                                    } else if (needsLiveness) {
+                                        if (isNinCompleted) {
+                                            repository.getSessionNinData(
+                                                sessionId = sessionContext.sessionId,
+                                                secretKey = sessionContext.secretKey
+                                            ).onSuccess { ninData ->
+                                                sessionContext = sessionContext.copy(ninDetails = ninData, selectedIdType = "NIN")
+                                            }
+                                        } else {
+                                            repository.getSessionBvnData(
+                                                sessionId = sessionContext.sessionId,
+                                                secretKey = sessionContext.secretKey
+                                            ).onSuccess { bvnData ->
+                                                sessionContext = sessionContext.copy(bvnDetails = bvnData, selectedIdType = "BVN")
+                                            }
+                                        }
+                                        currentStep = ApprovalStep.Liveliness.PHOTO_INTRO
+                                    } else {
+                                        currentStep = ApprovalStep.Identity.SUCCESS
+                                    }
                                 }
                                 createResult.onFailure { error ->
                                     val displayMsg = error.message?.takeIf { it.isNotBlank() }
@@ -196,21 +247,30 @@ fun ApprovalFlowNavigator(
                 ApprovalStep.Identity.WELCOME -> {
                     WelcomeScreen(
                         isLoading = isWelcomeLoading,
+                        isDevelopment = isDevelopment,
                         onStartVerification = {
                             coroutineScope.launch {
                                 isWelcomeLoading = true
-//                                val clientSessionId = createSessionId()
-
                                 val createResult = repository.getWidgetSession(
                                     secretKey = config.publicKey,
                                     sessionId = config.sessionId
                                 )
 
                                 createResult.onSuccess { sessionData ->
-                                    sessionContext =
-                                        sessionContext.copy(sessionId = config.sessionId)
+                                    sessionContext = sessionContext.copy(
+                                        sessionId = config.sessionId,
+                                        services = sessionData.services
+                                    )
                                     isWelcomeLoading = false
-                                    currentStep = ApprovalStep.Identity.BVN_CHECK
+
+                                    val hasBvn = sessionData.services.bvn != null
+                                    val hasNin = sessionData.services.nin != null
+
+                                    currentStep = when {
+                                        hasBvn && hasNin -> ApprovalStep.Identity.VERIFICATION_METHOD
+                                        hasNin -> ApprovalStep.Identity.NIN_CHECK
+                                        else -> ApprovalStep.Identity.BVN_CHECK
+                                    }
                                 }.onFailure { error ->
                                     isWelcomeLoading = false
                                     val displayMsg = error.message?.takeIf { it.isNotBlank() }
@@ -223,16 +283,41 @@ fun ApprovalFlowNavigator(
                     )
                 }
 
+                // 2b. Document Chooser Screen
+                ApprovalStep.Identity.VERIFICATION_METHOD -> {
+                    VerificationMethodScreen(
+                        isDevelopment = isDevelopment,
+                        selectedMethod = null,
+                        onBack = { currentStep = ApprovalStep.Identity.WELCOME },
+                        onProceed = { chosenMethod ->
+                            sessionContext = sessionContext.copy(selectedIdType = chosenMethod)
+                            currentStep = if (chosenMethod == "NIN") {
+                                ApprovalStep.Identity.NIN_CHECK
+                            } else {
+                                ApprovalStep.Identity.BVN_CHECK
+                            }
+                        }
+                    )
+                }
+
                 // 3. BVN Form Screen
                 ApprovalStep.Identity.BVN_CHECK -> {
                     BvnCheckScreen(
                         isLoading = isBvnLoading,
+                        isDevelopment = isDevelopment,
                         initialUserData = config.userData,
-                        onBack = { currentStep = ApprovalStep.Identity.WELCOME },
+                        onBack = {
+                            val hasBvn = sessionContext.services?.bvn != null
+                            val hasNin = sessionContext.services?.nin != null
+                            currentStep = if (hasBvn && hasNin) {
+                                ApprovalStep.Identity.VERIFICATION_METHOD
+                            } else {
+                                ApprovalStep.Identity.WELCOME
+                            }
+                        },
                         onProceed = { firstName, lastName, dob, bvn ->
                             coroutineScope.launch {
                                 isBvnLoading = true
-
 
                                 val bvnResult =
                                     if (isFirstCallSuccess) repository.getSessionBvnData(
@@ -244,22 +329,24 @@ fun ApprovalFlowNavigator(
                                     )
 
                                 bvnResult.onSuccess { details ->
-
                                     isFirstCallSuccess = true
 
-                                    val nameMatches = isNameMatching(
+                                    val nameMatches = isDevelopment || isNameMatching(
                                         inputFirst = firstName,
                                         inputLast = lastName,
                                         bvnFirst = details.firstName,
                                         bvnLast = details.lastName,
                                         bvnMiddle = details.middleName
                                     )
-                                    val dateMatches = isDateMatching(dob, details.dateOfBirth)
+                                    val dateMatches = isDevelopment || isDateMatching(dob, details.dateOfBirth)
 
                                     if (nameMatches && dateMatches) {
-                                        sessionContext = sessionContext.copy(bvnDetails = details)
+                                        sessionContext = sessionContext.copy(
+                                            bvnDetails = details,
+                                            selectedIdType = "BVN"
+                                        )
 
-                                        repository.updateSessionWithBvn(
+                                        repository.updateSession(
                                             sessionId = sessionContext.sessionId,
                                             secretKey = sessionContext.secretKey,
                                             status = Status.COMPLETED,
@@ -269,14 +356,15 @@ fun ApprovalFlowNavigator(
 
                                         isBvnLoading = false
 
+                                        val isLivenessCompleted = sessionContext.services?.liveness?.status == Status.COMPLETED
                                         currentStep =
-                                            if (config.modules.contains(ApprovalModule.LIVELINESS)) {
+                                            if (config.modules.contains(ApprovalModule.LIVELINESS) && !isLivenessCompleted) {
                                                 ApprovalStep.Liveliness.PHOTO_INTRO
                                             } else {
                                                 ApprovalStep.Identity.SUCCESS
                                             }
                                     } else {
-                                        repository.updateSessionWithBvn(
+                                        repository.updateSession(
                                             sessionId = sessionContext.sessionId,
                                             secretKey = sessionContext.secretKey,
                                             status = Status.PENDING,
@@ -299,7 +387,7 @@ fun ApprovalFlowNavigator(
                                     }
 
                                 }.onFailure { error ->
-                                    repository.updateSessionWithBvn(
+                                    repository.updateSession(
                                         sessionId = sessionContext.sessionId,
                                         secretKey = sessionContext.secretKey,
                                         status = Status.FAILED,
@@ -318,6 +406,112 @@ fun ApprovalFlowNavigator(
                     )
                 }
 
+                // 3b. NIN Form Screen
+                ApprovalStep.Identity.NIN_CHECK -> {
+                    NinCheckScreen(
+                        isLoading = isNinLoading,
+                        isDevelopment = isDevelopment,
+                        initialUserData = config.userData,
+                        onBack = {
+                            val hasBvn = sessionContext.services?.bvn != null
+                            val hasNin = sessionContext.services?.nin != null
+                            currentStep = if (hasBvn && hasNin) {
+                                ApprovalStep.Identity.VERIFICATION_METHOD
+                            } else {
+                                ApprovalStep.Identity.WELCOME
+                            }
+                        },
+                        onProceed = { firstName, lastName, dob, nin ->
+                            coroutineScope.launch {
+                                isNinLoading = true
+
+                                val ninResult =
+                                    if (isFirstCallSuccess) repository.getSessionNinData(
+                                        sessionId = sessionContext.sessionId,
+                                        secretKey = sessionContext.secretKey
+                                    ) else repository.verifyNin(
+                                        secretKey = sessionContext.secretKey,
+                                        nin = nin,
+                                    )
+
+                                ninResult.onSuccess { details ->
+                                    isFirstCallSuccess = true
+
+                                    val nameMatches = isDevelopment || isNameMatching(
+                                        inputFirst = firstName,
+                                        inputLast = lastName,
+                                        bvnFirst = details.firstName,
+                                        bvnLast = details.lastName,
+                                        bvnMiddle = details.middleName
+                                    )
+                                    val dateMatches = isDevelopment || isDateMatching(dob, details.dateOfBirth)
+
+                                    if (nameMatches && dateMatches) {
+                                        sessionContext = sessionContext.copy(
+                                            ninDetails = details,
+                                            selectedIdType = "NIN"
+                                        )
+
+                                        repository.updateSession(
+                                            sessionId = sessionContext.sessionId,
+                                            secretKey = sessionContext.secretKey,
+                                            status = Status.COMPLETED,
+                                            service = Service.NIN,
+                                            nin = nin
+                                        )
+
+                                        isNinLoading = false
+
+                                        val isLivenessCompleted = sessionContext.services?.liveness?.status == Status.COMPLETED
+                                        currentStep =
+                                            if (config.modules.contains(ApprovalModule.LIVELINESS) && !isLivenessCompleted) {
+                                                ApprovalStep.Liveliness.PHOTO_INTRO
+                                            } else {
+                                                ApprovalStep.Identity.SUCCESS
+                                            }
+                                    } else {
+                                        repository.updateSession(
+                                            sessionId = sessionContext.sessionId,
+                                            secretKey = sessionContext.secretKey,
+                                            status = Status.PENDING,
+                                            service = Service.NIN,
+                                            nin = nin
+                                        )
+
+                                        isNinLoading = false
+                                        mismatchDialogMessage = when {
+                                            !nameMatches && !dateMatches ->
+                                                "The name and date of birth entered do not match the records registered with this NIN. Please verify and try again."
+
+                                            !nameMatches ->
+                                                "The name entered does not match the records registered with this NIN. Please check the spelling of your first and last names and try again."
+
+                                            else ->
+                                                "The date of birth entered does not match the records registered with this NIN. Please check your date of birth and try again."
+                                        }
+
+                                    }
+
+                                }.onFailure { error ->
+                                    repository.updateSession(
+                                        sessionId = sessionContext.sessionId,
+                                        secretKey = sessionContext.secretKey,
+                                        status = Status.FAILED,
+                                        service = Service.NIN,
+                                        nin = nin
+                                    )
+                                    isNinLoading = false
+
+                                    toastState.show(
+                                        error.message
+                                            ?: "NIN verification failed. Please check and try again"
+                                    )
+                                }
+                            }
+                        }
+                    )
+                }
+
                 // 4. Identity Liveliness step
                 ApprovalStep.Identity.LIVELINESS -> {
                     currentStep = ApprovalStep.Liveliness.PHOTO_INTRO
@@ -326,6 +520,7 @@ fun ApprovalFlowNavigator(
                 // 5. Success Screen
                 ApprovalStep.Identity.SUCCESS -> {
                     VerificationSuccessScreen(
+                        isDevelopment = isDevelopment,
                         onDismiss = { onFinishWithResult(SessionResult.Success(sessionContext.sessionId)) },
                         onProceed = { onFinishWithResult(SessionResult.Success(sessionContext.sessionId)) }
                     )
@@ -340,6 +535,7 @@ fun ApprovalFlowNavigator(
                     ApprovalErrorScreen(
                         title = title,
                         message = displayMessage,
+                        isDevelopment = isDevelopment,
                         onDismiss = {
                             onFinishWithResult(
                                 SessionResult.Error(
@@ -374,24 +570,52 @@ fun ApprovalFlowNavigator(
                         onValidationSuccess = {
                             coroutineScope.launch {
                                 try {
-//
-                                    val result = repository.getSessionBvnData(
-                                        sessionId = sessionContext.sessionId,
-                                        secretKey = sessionContext.secretKey
+                                    val sessionResult = repository.getWidgetSession(
+                                        secretKey = config.publicKey,
+                                        sessionId = config.sessionId
                                     )
-                                    result.onSuccess { details ->
-                                        sessionContext = sessionContext.copy(bvnDetails = details)
+                                    sessionResult.onSuccess { sessionData ->
+                                        sessionContext = sessionContext.copy(services = sessionData.services)
+                                        val isNinCompleted = sessionData.services.nin?.status == Status.COMPLETED
+                                        val isLivenessCompleted = sessionData.services.liveness?.status == Status.COMPLETED
 
-//                                        currentStep =
-//                                            if (sessionContext.bvnDetails?.photo != null) {
-//
-//                                                ApprovalStep.Liveliness.PHOTO_INTRO
-//                                            } else {
-//                                                ApprovalStep.Identity.BVN_CHECK
-//                                            }
+                                        if (isLivenessCompleted) {
+                                            currentStep = ApprovalStep.Liveliness.SUCCESS
+                                            return@onSuccess
+                                        }
 
-                                    }
-                                    result.onFailure { error ->
+                                        if (isNinCompleted) {
+                                            val ninResult = repository.getSessionNinData(
+                                                sessionId = sessionContext.sessionId,
+                                                secretKey = sessionContext.secretKey
+                                            )
+                                            ninResult.onSuccess { details ->
+                                                sessionContext = sessionContext.copy(ninDetails = details, selectedIdType = "NIN")
+                                                currentStep = ApprovalStep.Liveliness.PHOTO_INTRO
+                                            }.onFailure { error ->
+                                                val displayMsg = error.message?.takeIf { it.isNotBlank() }
+                                                    ?: "Unknown error occurred"
+                                                errorMessage = displayMsg
+                                                errorTitle = "Invalid Widget Session"
+                                                currentStep = ApprovalStep.Liveliness.ERROR
+                                            }
+                                        } else {
+                                            val bvnResult = repository.getSessionBvnData(
+                                                sessionId = sessionContext.sessionId,
+                                                secretKey = sessionContext.secretKey
+                                            )
+                                            bvnResult.onSuccess { details ->
+                                                sessionContext = sessionContext.copy(bvnDetails = details, selectedIdType = "BVN")
+                                                currentStep = ApprovalStep.Liveliness.PHOTO_INTRO
+                                            }.onFailure { error ->
+                                                val displayMsg = error.message?.takeIf { it.isNotBlank() }
+                                                    ?: "Unknown error occurred"
+                                                errorMessage = displayMsg
+                                                errorTitle = "Invalid Widget Session"
+                                                currentStep = ApprovalStep.Liveliness.ERROR
+                                            }
+                                        }
+                                    }.onFailure { error ->
                                         val displayMsg = error.message?.takeIf { it.isNotBlank() }
                                             ?: "Unknown error occurred"
                                         errorMessage = displayMsg
@@ -399,11 +623,9 @@ fun ApprovalFlowNavigator(
                                         currentStep = ApprovalStep.Liveliness.ERROR
                                     }
                                 } catch (_: Exception) {
-                                    // Error handled during verification if session is invalid
                                     currentStep = ApprovalStep.Liveliness.ERROR
                                 }
                             }
-                            currentStep = ApprovalStep.Liveliness.PHOTO_INTRO
                         },
                         onValidationError = { msg ->
                             currentStep = ApprovalStep.Liveliness.ERROR
@@ -419,12 +641,13 @@ fun ApprovalFlowNavigator(
                             onFinishWithResult(SessionResult.Cancelled)
                         },
                         isLoading = isIntroLoading,
+                        isDevelopment = isDevelopment,
                         onProceed = {
                             coroutineScope.launch {
                                 isIntroLoading = true
                                 val healthResult = repository.checkLivelinessHealth()
 
-                                repository.updateSessionWithBvn(
+                                repository.updateSession(
                                     sessionId = sessionContext.sessionId,
                                     secretKey = sessionContext.secretKey,
                                     status = Status.PENDING,
@@ -463,17 +686,23 @@ fun ApprovalFlowNavigator(
 
                     LivelinessCameraScreen(
                         networkQuality = networkQuality,
+                        isDevelopment = isDevelopment,
                         onDismiss = { currentStep = ApprovalStep.Liveliness.PHOTO_INTRO },
                         onStepCapture = { capture ->
                             val shouldRestart =
                                 isRetryFlow && capture.step == FaceVerificationStep.STILLNESS
                             repository.verifyChallenge(
                                 accessToken = sessionContext.secretKey,
-                                bvnImage = sessionContext.bvnDetails?.photo ?: "",
+                                bvnImage = sessionContext.identityImage
+                                    ?: sessionContext.bvnDetails?.photo
+                                    ?: sessionContext.ninDetails?.photo
+                                    ?: "",
                                 step = capture.step.apiName,
                                 sessionId = sessionContext.sessionId,
                                 frame = capture.jpegDataUrl,
                                 restart = shouldRestart,
+                                idType = sessionContext.selectedIdType,
+                                environment = if (config.environment.isDevelopment) "development" else "production"
                             )
                         },
                         onVerificationComplete = { overallPassed ->
@@ -486,10 +715,11 @@ fun ApprovalFlowNavigator(
                 // 4. Processing & Polling Screen
                 ApprovalStep.Liveliness.PROCESSING -> {
                     VerificationProcessingScreen(
+                        isDevelopment = isDevelopment,
                         onDismiss = { onFinishWithResult(SessionResult.Cancelled) },
                         onSuccess = {
                             coroutineScope.launch {
-                                repository.updateSessionWithBvn(
+                                repository.updateSession(
                                     sessionId = sessionContext.sessionId,
                                     secretKey = sessionContext.secretKey,
                                     status = Status.COMPLETED,
@@ -500,7 +730,7 @@ fun ApprovalFlowNavigator(
                         },
                         onFailure = {
                             coroutineScope.launch {
-                                repository.updateSessionWithBvn(
+                                repository.updateSession(
                                     sessionId = sessionContext.sessionId,
                                     secretKey = sessionContext.secretKey,
                                     status = Status.FAILED,
@@ -522,6 +752,7 @@ fun ApprovalFlowNavigator(
                 // 5. Retry Screen
                 ApprovalStep.Liveliness.RETRY -> {
                     SelfieRetryScreen(
+                        isDevelopment = isDevelopment,
                         onDismiss = {
 
                             onFinishWithResult(SessionResult.Cancelled)
@@ -537,6 +768,7 @@ fun ApprovalFlowNavigator(
                 // 6. Success Screen
                 ApprovalStep.Liveliness.SUCCESS -> {
                     VerificationSuccessScreen(
+                        isDevelopment = isDevelopment,
                         onDismiss = { onFinishWithResult(SessionResult.Success(sessionContext.sessionId)) },
                         onProceed = { onFinishWithResult(SessionResult.Success(sessionContext.sessionId)) }
                     )
@@ -551,6 +783,7 @@ fun ApprovalFlowNavigator(
                     ApprovalErrorScreen(
                         title = title,
                         message = displayMessage,
+                        isDevelopment = isDevelopment,
                         onDismiss = {
                             onFinishWithResult(
                                 SessionResult.Error(

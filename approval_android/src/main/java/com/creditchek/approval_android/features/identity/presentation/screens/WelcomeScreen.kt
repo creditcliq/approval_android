@@ -12,6 +12,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.paint
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -27,10 +28,12 @@ import com.creditchek.approval_android.core.shared.components.PoweredByCreditChe
 import com.creditchek.approval_android.core.theme.*
 import com.creditchek.approval_android.features.identity.presentation.components.*
 import com.creditchek.approval_android.R
+import com.creditchek.approval_android.core.session.DevelopmentDecoration
 
 @Composable
 fun WelcomeScreen(
     isLoading: Boolean = false,
+    isDevelopment: Boolean = false,
     onStartVerification: () -> Unit,
     onDismiss: () -> Unit,
     onPrivacyClick: () -> Unit = {},
@@ -51,7 +54,15 @@ fun WelcomeScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp), horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(28.dp))
+            if (isDevelopment) {
+                Spacer(modifier = Modifier.height(8.dp))
+                DevelopmentDecoration(
+                    modifier = Modifier.align(Alignment.End)
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+            } else {
+                Spacer(modifier = Modifier.height(24.dp))
+            }
 
             Image(
                 painter = painterResource(id = R.drawable.ic_logo),

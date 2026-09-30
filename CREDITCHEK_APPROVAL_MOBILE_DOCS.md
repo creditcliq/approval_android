@@ -6,7 +6,7 @@
 
 ## 1. Overview
 
-The **CreditChek Approval Mobile SDK** allows you to verify customer identities in minutes directly within your mobile applications. 
+The **CreditChek Approval Mobile SDK** allows you to verify customer identities in minutes directly within your mobile applications using **BVN** or **NIN** and **active face liveness**. 
 
 ### How It Works:
 ```
@@ -14,14 +14,14 @@ The **CreditChek Approval Mobile SDK** allows you to verify customer identities 
 │ 1. Merchant Backend     │ ──▶  │ 2. Mobile SDK Flow      │ ──▶  │ 3. Verification Result  │
 │ Calls CreditChek API:   │      │ (Host App launches SDK) │      │ Host App & Backend:     │
 │ POST /widget-session/   │      │ • Validates Session ID  │      │ • Verified Session ID   │
-│ └── Returns: sessionId  │      │ • BVN & Active Liveness │      │ • Status: Passed/Failed │
+│ └── Returns: sessionId  │      │ • BVN/NIN & Liveness    │      │ • Status: Passed/Failed │
 └─────────────────────────┘      └─────────────────────────┘      └─────────────────────────┘
 ```
 
-1. **Session Creation (Backend)**: Your backend calls CreditChek's Widget Session API (`POST /v1/auth/widget-session/create`) with your secret/public key and desired services (`["bvn", "liveness"]`) to generate a unique `sessionId`.
+1. **Session Creation (Backend)**: Your backend calls CreditChek's Widget Session API (`POST https://api.creditchek.africa/v1/auth/widget-session/create`) with your public key and desired services (`["nin", "liveness"]`) to generate a unique `sessionId`.
 2. **Launch Verification (Mobile SDK)**: Your mobile app receives the `sessionId` from your backend and initializes the SDK using `ApprovalConfig(publicKey: "...", sessionId: "...")`.
-3. **Identity & Liveness**: The user verifies their BVN demographics and completes interactive facial liveness gestures.
-4. **Instant Result**: The SDK returns the completed `sessionId` to your application and updates your backend via webhooks.
+3. **Identity & Liveness**: The user verifies their BVN or NIN and completes interactive facial liveness gestures.
+4. **Instant Result**: The SDK returns the completed `sessionId` to your application and your backend verifies the outcome with CreditChek.
 
 ---
 
@@ -53,54 +53,50 @@ dependencyResolutionManagement {
 In your `app/build.gradle.kts`:
 ```kotlin
 dependencies {
-    implementation("com.github.creditcliq:approval_android:1.0.0+1")
+    implementation("com.github.creditcliq:approval_android:1.0.1")
 }
 ```
 
 #### 2. Permissions (`AndroidManifest.xml`)
-Ensure your app declares Camera and Internet access:
 ```xml
-<uses-permission android:name="android.permission.INTERNET" />
-<uses-permission android:name="android.permission.CAMERA" />
-<uses-feature android:name="android.hardware.camera" android:required="false" />
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+</manifest>
 ```
 
-#### 3. Launch the SDK
+#### 3. Launch the SDK:
 
-##### In Jetpack Compose (Recommended):
+##### In Jetpack Compose:
 ```kotlin
-import com.creditchek.approval_android.CreditChekApproval
-import com.creditchek.approval_android.core.session.ApprovalConfig
-import com.creditchek.approval_android.core.session.ApprovalEnv
-import com.creditchek.approval_android.core.session.SessionResult
-
-@Composable
-fun VerificationScreen(backendSessionId: String) {
-    val approvalLauncher = rememberLauncherForActivityResult(CreditChekApproval.contract()) { result ->
-        when (result) {
-            is SessionResult.Success -> {
-                // Verification passed! Use sessionId to confirm with your backend
-                println("Verified Session ID: ${result.sessionId}")
-            }
-            is SessionResult.Cancelled -> {
-                println("User dismissed verification")
-            }
-            is SessionResult.Error -> {
-                println("Verification failed (${result.code}): ${result.message}")
-            }
+val approvalLauncher = rememberLauncherForActivityResult(
+    contract = CreditChekApproval.contract()
+) { result ->
+    when (result) {
+        is SessionResult.Success -> {
+            // Verification passed! Use sessionId to confirm with your backend
+            println("Verified Session ID: ${result.sessionId}")
+        }
+        is SessionResult.Cancelled -> {
+            println("User dismissed verification")
+        }
+        is SessionResult.Error -> {
+            println("Verification failed (${result.code}): ${result.message}")
         }
     }
+}
 
-    Button(onClick = {
-        val config = ApprovalConfig(
-            publicKey = "YOUR_PUBLIC_KEY",
-            sessionId = backendSessionId, // Obtained from your backend
-            environment = ApprovalEnv.SANDBOX // Use ApprovalEnv.PRODUCTION in release
-        )
-        approvalLauncher.launch(config)
-    }) {
-        Text("Verify Identity")
-    }
+Button(onClick = {
+    val config = ApprovalConfig(
+        publicKey = "YOUR_PUBLIC_KEY",
+        sessionId = backendSessionId, // Obtained from your backend
+        environment = ApprovalEnv.DEVELOPMENT // Use ApprovalEnv.PRODUCTION in release
+    )
+    approvalLauncher.launch(config)
+}) {
+    Text("Verify Identity")
 }
 ```
 
@@ -111,7 +107,7 @@ CreditChekApproval.start(
     config = ApprovalConfig(
         publicKey = "YOUR_PUBLIC_KEY",
         sessionId = backendSessionId, // Obtained from your backend
-        environment = ApprovalEnv.SANDBOX
+        environment = ApprovalEnv.DEVELOPMENT
     )
 ) { result ->
     when (result) {
@@ -128,7 +124,7 @@ CreditChekApproval.start(
 
 #### Requirements:
 - **iOS Deployment Target:** iOS 15.0+
-- **Swift:** 5.9+
+- **Swift:** 5.9+ / Swift 6 compatible
 - **Xcode:** 15.0+
 
 #### 1. Add Swift Package
@@ -162,7 +158,7 @@ struct VerificationView: View {
                 config: ApprovalConfig(
                     publicKey: "YOUR_PUBLIC_KEY",
                     sessionId: backendSessionId, // Obtained from your backend
-                    environment: .sandbox
+                    environment: .development // Use .production in release
                 )
             ) { result in
                 switch result {
@@ -207,7 +203,7 @@ void startVerification(BuildContext context, String backendSessionId) async {
     config: ApprovalConfig(
       publicKey: 'YOUR_PUBLIC_KEY',
       sessionId: backendSessionId, // Obtained from your backend
-      environment: ApprovalEnvironment.sandbox,
+      environment: ApprovalEnvironment.development,
     ),
   );
 
@@ -231,21 +227,16 @@ void startVerification(BuildContext context, String backendSessionId) async {
 
 #### 1. Install Package
 ```bash
-npm install @creditchek/approval-react-native
+npm install approval_react_native
 # or
-yarn add @creditchek/approval-react-native
+yarn add approval_react_native
 ```
 
-#### 2. iOS CocoaPods Setup
-```bash
-cd ios && pod install && cd ..
-```
-
-#### 3. Launch the SDK:
+#### 2. Launch the SDK:
 ```tsx
 import React from 'react';
 import { Button, View, Alert } from 'react-native';
-import { CreditChekApproval, Environment } from '@creditchek/approval-react-native';
+import CreditChekApproval, { ApprovalEnvironment } from 'approval_react_native';
 
 export default function VerificationScreen({ backendSessionId }: { backendSessionId: string }) {
   const handleStartVerification = async () => {
@@ -253,7 +244,7 @@ export default function VerificationScreen({ backendSessionId }: { backendSessio
       const result = await CreditChekApproval.start({
         publicKey: 'YOUR_PUBLIC_KEY',
         sessionId: backendSessionId, // Obtained from your backend
-        environment: Environment.SANDBOX, // Use Environment.PRODUCTION in release
+        environment: 'DEVELOPMENT', // Use 'PRODUCTION' in release
       });
 
       if (result.status === 'success') {
@@ -282,9 +273,9 @@ export default function VerificationScreen({ backendSessionId }: { backendSessio
 | :--- | :--- | :---: | :--- |
 | **`publicKey`** *(Required)* | `String` | — | Your public API key from the CreditChek Dashboard. |
 | **`sessionId`** *(Required)* | `String` | — | Unique session UUID created by your backend via `/v1/auth/widget-session/create`. |
-| **`environment`** | `Enum / String` | `SANDBOX` | Set to `.PRODUCTION` when going live. |
+| **`environment`** | `Enum / String` | `PRODUCTION` | `DEVELOPMENT` (test mode with "TEST MODE" badge) or `PRODUCTION`. |
 | **`modules`** *(Optional)* | `List<ApprovalModule>` | `[.identity]` | Modules to execute (`identity`, `liveliness`). |
-| **`userData`** *(Optional)* | `AUserData?` | `null` | Optional pre-fill data (first name, last name, BVN, date of birth, email, phone). |
+| **`userData`** *(Optional)* | `AUserData?` | `null` | Optional pre-fill data (`firstName`, `lastName`, `bvn`, `nin`, `dob`, `email`, `phone`). |
 
 ---
 
@@ -294,7 +285,7 @@ When the verification flow concludes, the SDK returns one of three outcomes:
 
 | Result | Parameters | Description |
 | :--- | :--- | :--- |
-| **`Success`** | `sessionId: String` | Identity and face liveness were verified successfully. Pass `sessionId` to your backend to confirm verification status. |
+| **`Success`** | `sessionId: String` | Identity and face liveness were verified on the device. Confirm with your backend. |
 | **`Cancelled`** | — | The user closed or dismissed the verification sheet before completion. |
 | **`Error`** | `code: String, message: String` | The session failed due to network errors or invalid credentials. |
 
@@ -311,5 +302,5 @@ When the verification flow concludes, the SDK returns one of three outcomes:
 ## 6. Support & Resources
 
 - **CreditChek Developer Portal**: [https://developer.creditchek.africa](https://developer.creditchek.africa)
-- **API Dashboard**: [https://dashboard.creditchek.africa](https://dashboard.creditchek.africa)
+- **API Dashboard**: [https://app.creditchek.africa](https://app.creditchek.africa)
 - **Email Support**: support@creditchek.africa

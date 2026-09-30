@@ -33,7 +33,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.creditchek.approval_android.CreditChekApproval
-import com.creditchek.approval_android.core.session.AUserData
 import com.creditchek.approval_android.core.session.ApprovalConfig
 import com.creditchek.approval_android.core.session.ApprovalEnv
 import com.creditchek.approval_android.core.session.ApprovalModule
@@ -118,15 +117,17 @@ fun DemoAppScreen() {
                     sessionStatus = "Verification in progress..."
                     statusColor = Color(0xFF064BEF)
 
-                    val publicKey = BuildConfig.PUBLIC_KEY
+                    val publicKey =
+                        "vy6LZWI/l/pOc868z8LAgEBCdvsSomPev2TxLqIdlNZIueMM0Agl8G88zxyE65LN"
 
                     // 👉 Launch the SDK with 1 line of code:
                     CreditChekApproval.start(
                         context = context,
                         config = ApprovalConfig(
-                           publicKey = "your-business-public-key",
-                            modules = listOf(),
-                            sessionId = "session-id-from-your-backend",
+                            publicKey = publicKey,
+                            environment = ApprovalEnv.PRODUCTION,
+                            modules = listOf(ApprovalModule.IDENTITY, ApprovalModule.LIVELINESS),
+                            sessionId = "31c48046-6943-4d21-9886-1b0f318781b9",
                         )
                     ) { result ->
                         when (result) {

@@ -36,6 +36,7 @@ import com.creditchek.approval_android.core.shared.components.PoweredByCreditChe
 import com.creditchek.approval_android.core.theme.*
 import com.creditchek.approval_android.features.liveliness.data.models.FaceChallengeCapture
 import com.creditchek.approval_android.features.liveliness.data.models.ValidationData
+import com.creditchek.approval_android.core.session.DevelopmentDecoration
 import com.creditchek.approval_android.features.identity.presentation.components.ApprovalHeader
 import com.creditchek.approval_android.features.liveliness.presentation.components.NetworkStatusPill
 import com.creditchek.approval_android.features.liveliness.presentation.components.drawFaceOvalBorder
@@ -43,6 +44,7 @@ import com.creditchek.approval_android.features.liveliness.presentation.componen
 @Composable
 fun LivelinessCameraScreen(
     networkQuality: NetworkQuality = NetworkQuality.MODERATE,
+    isDevelopment: Boolean = false,
     onDismiss: () -> Unit = {},
     onStepCapture: (suspend (FaceChallengeCapture) -> Result<ValidationData>)? = null,
     onVerificationComplete: (Boolean) -> Unit = {}
@@ -136,7 +138,17 @@ fun LivelinessCameraScreen(
                 .padding(horizontal = 20.dp, vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            NetworkStatusPill(quality = networkQuality)
+            Box(modifier = Modifier.fillMaxWidth()) {
+                NetworkStatusPill(
+                    quality = networkQuality,
+                    modifier = Modifier.align(Alignment.Center)
+                )
+                if (isDevelopment) {
+                    DevelopmentDecoration(
+                        modifier = Modifier.align(Alignment.CenterEnd)
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(20.dp))
 

@@ -32,6 +32,7 @@ import com.creditchek.approval_android.core.shared.components.ApprovalButton
 import com.creditchek.approval_android.core.shared.components.PoweredByCreditChek
 import com.creditchek.approval_android.core.theme.ApprovalBlue
 import com.creditchek.approval_android.core.theme.ApprovalCanvas
+import com.creditchek.approval_android.core.session.DevelopmentDecoration
 import com.creditchek.approval_android.core.theme.ApprovalDanger
 import com.creditchek.approval_android.core.theme.ApprovalTheme
 import com.creditchek.approval_android.features.identity.presentation.components.ApprovalHeader
@@ -43,7 +44,8 @@ fun SelfieRetryScreen(
     onTryAgain: () -> Unit = {},
     reason: String = "No obstructions: remove hats,\nglasses and masks",
     isLoading: Boolean = false,
-    errorMessage: String? = null
+    errorMessage: String? = null,
+    isDevelopment: Boolean = false
 ) {
     Column(
         modifier = Modifier
@@ -64,7 +66,15 @@ fun SelfieRetryScreen(
                 .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(16.dp))
+            if (isDevelopment) {
+                Spacer(modifier = Modifier.height(8.dp))
+                DevelopmentDecoration(
+                    modifier = Modifier.align(Alignment.End)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+            } else {
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
             Text(
                 text = "Let’s Try That Again",

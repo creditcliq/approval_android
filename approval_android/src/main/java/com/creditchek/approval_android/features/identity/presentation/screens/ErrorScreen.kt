@@ -37,6 +37,7 @@ import com.creditchek.approval_android.core.theme.ApprovalCanvas
 import com.creditchek.approval_android.core.theme.ApprovalDanger
 import com.creditchek.approval_android.core.theme.ApprovalTextSecondary
 import com.creditchek.approval_android.core.theme.ApprovalTheme
+import com.creditchek.approval_android.core.session.DevelopmentDecoration
 import com.creditchek.approval_android.features.identity.presentation.components.ApprovalHeader
 
 // ==========================================
@@ -49,6 +50,7 @@ fun ApprovalErrorScreen(
     title: String,
     message: String,
     actionLabel: String = "Close",
+    isDevelopment: Boolean = false,
     onDismiss: () -> Unit,
     onRetry: (() -> Unit)? = null
 ) {
@@ -62,6 +64,15 @@ fun ApprovalErrorScreen(
             title = "Approval Verification",
             onClose = onDismiss
         )
+
+        if (isDevelopment) {
+            Spacer(modifier = Modifier.height(8.dp))
+            DevelopmentDecoration(
+                modifier = Modifier
+                    .padding(horizontal = 20.dp)
+                    .align(Alignment.End)
+            )
+        }
 
         // 2. Body
         Column(

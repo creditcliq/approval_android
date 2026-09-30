@@ -3,6 +3,7 @@ package com.creditchek.approval_android.features.identity.presentation.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -13,13 +14,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.creditchek.approval_android.core.session.AUserData
+import com.creditchek.approval_android.core.session.DevelopmentDecoration
 import com.creditchek.approval_android.core.shared.components.ApprovalButton
 import com.creditchek.approval_android.core.shared.components.ApprovalTextField
 import com.creditchek.approval_android.core.shared.components.PoweredByCreditChek
@@ -27,74 +29,29 @@ import com.creditchek.approval_android.core.theme.*
 import java.text.SimpleDateFormat
 import java.util.*
 
-import com.creditchek.approval_android.core.session.DevelopmentDecoration
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BvnCheckScreen(
+fun NinCheckScreen(
     initialUserData: AUserData? = null,
     isLoading: Boolean = false,
     isDevelopment: Boolean = false,
     onBack: () -> Unit,
-    onProceed: (firstName: String, lastName: String, dob: String, bvn: String) -> Unit
+    onProceed: (firstName: String, lastName: String, dob: String, nin: String) -> Unit
 ) {
-    val defaultBvn = if (isDevelopment) "12345678901" else (initialUserData?.bvn ?: "")
+    val defaultNin = if (isDevelopment) "12345678901" else (initialUserData?.nin ?: "")
     val isFirstNameReadOnly = isLoading || !initialUserData?.firstName.isNullOrBlank()
     val isLastNameReadOnly = isLoading || !initialUserData?.lastName.isNullOrBlank()
     val isDobReadOnly = isLoading || !initialUserData?.dob.isNullOrBlank()
-    val isBvnReadOnly = isLoading || isDevelopment || !initialUserData?.bvn.isNullOrBlank()
+    val isNinReadOnly = isLoading || isDevelopment || !initialUserData?.nin.isNullOrBlank()
 
     var firstName by remember { mutableStateOf(initialUserData?.firstName ?: "") }
     var lastName by remember { mutableStateOf(initialUserData?.lastName ?: "") }
     var dob by remember { mutableStateOf(initialUserData?.dob ?: "") }
-    var bvn by remember { mutableStateOf(defaultBvn) }
+    var nin by remember { mutableStateOf(defaultNin) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var showConfirmDialog by remember { mutableStateOf(false) }
 
     var showDatePicker by remember { mutableStateOf(false) }
-
-    /*
-    // Confirmation Dialog with Price (₦50)
-    if (showConfirmDialog) {
-        AlertDialog(
-            onDismissRequest = { showConfirmDialog = false },
-            title = {
-                Text(
-                    text = "Confirm Verification",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = ApprovalTextPrimary
-                )
-            },
-            text = {
-                Text(
-                    text = "This BVN verification will incur a fee of ₦50. Do you want to proceed?",
-                    fontSize = 14.sp,
-                    color = ApprovalTextSecondary,
-                    lineHeight = 20.sp
-                )
-            },
-            confirmButton = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    ApprovalButton(
-                        text = "Proceed",
-                        onClick = {
-                            showConfirmDialog = false
-                            onProceed(firstName.trim(), lastName.trim(), dob.trim(), bvn.trim())
-                        }
-                    )
-                    ApprovalButton(
-                        isSecondary = true,
-                        text = "Cancel",
-                        onClick = { showConfirmDialog = false }
-                    )
-                }
-            },
-            shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
-            containerColor = androidx.compose.ui.graphics.Color.White
-        )
-    }
-    */
 
     // DatePicker Dialog
     if (showDatePicker) {
@@ -103,9 +60,9 @@ fun BvnCheckScreen(
         )
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
-            shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+            shape = RoundedCornerShape(16.dp),
             colors = DatePickerDefaults.colors(
-                containerColor = androidx.compose.ui.graphics.Color.White
+                containerColor = Color.White
             ),
             confirmButton = {
                 TextButton(
@@ -129,13 +86,56 @@ fun BvnCheckScreen(
             DatePicker(
                 state = datePickerState,
                 colors = DatePickerDefaults.colors(
-                    containerColor = androidx.compose.ui.graphics.Color.White,
+                    containerColor = Color.White,
                     selectedDayContainerColor = ApprovalBlue,
                     todayDateBorderColor = ApprovalBlue
                 )
             )
         }
     }
+
+    /*
+    // Confirmation Dialog with Price (₦70)
+    if (showConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showConfirmDialog = false },
+            title = {
+                Text(
+                    text = "Confirm Verification",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = ApprovalTextPrimary
+                )
+            },
+            text = {
+                Text(
+                    text = "This NIN verification will incur a fee of ₦70. Do you want to proceed?",
+                    fontSize = 14.sp,
+                    color = ApprovalTextSecondary,
+                    lineHeight = 20.sp
+                )
+            },
+            confirmButton = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ApprovalButton(
+                        text = "Proceed",
+                        onClick = {
+                            showConfirmDialog = false
+                            onProceed(firstName.trim(), lastName.trim(), dob.trim(), nin.trim())
+                        }
+                    )
+                    ApprovalButton(
+                        isSecondary = true,
+                        text = "Cancel",
+                        onClick = { showConfirmDialog = false }
+                    )
+                }
+            },
+            shape = RoundedCornerShape(16.dp),
+            containerColor = Color.White
+        )
+    }
+    */
 
     Column(
         modifier = Modifier
@@ -164,7 +164,7 @@ fun BvnCheckScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "BVN Check",
+                    text = "NIN Check",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = ApprovalTextPrimary
@@ -177,7 +177,6 @@ fun BvnCheckScreen(
                 )
             }
 
-            // Empty spacer to balance the back button width
             Spacer(modifier = Modifier.size(48.dp))
         }
 
@@ -234,23 +233,22 @@ fun BvnCheckScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             ApprovalTextField(
-                label = "BVN",
-                value = bvn,
+                label = "NIN",
+                value = nin,
                 onValueChange = { input ->
                     if (input.length <= 11 && input.all { it.isDigit() }) {
-                        bvn = input
+                        nin = input
                     }
                 },
-                hint = "Enter BVN",
+                hint = "Enter NIN",
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                readOnly = isBvnReadOnly
+                readOnly = isNinReadOnly
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Warning Text
             Text(
-                text = "Your details must match entered BVN",
+                text = "Your details must match entered NIN",
                 fontSize = 13.sp,
                 color = ApprovalDanger,
                 textAlign = TextAlign.Center
@@ -268,18 +266,17 @@ fun BvnCheckScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // 3. Proceed Button
             ApprovalButton(
                 text = "Proceed",
                 onClick = {
                     if (firstName.isBlank() || lastName.isBlank() || dob.isBlank()) {
                         errorMessage = "Please fill all required fields"
-                    } else if (bvn.length != 11) {
-                        errorMessage = "BVN must be exactly 11 digits"
+                    } else if (nin.length != 11) {
+                        errorMessage = "NIN must be exactly 11 digits"
                     } else {
                         errorMessage = null
                         // showConfirmDialog = true
-                        onProceed(firstName.trim(), lastName.trim(), dob.trim(), bvn.trim())
+                        onProceed(firstName.trim(), lastName.trim(), dob.trim(), nin.trim())
                     }
                 },
                 isLoading = isLoading
@@ -290,15 +287,4 @@ fun BvnCheckScreen(
             Spacer(modifier = Modifier.height(16.dp))
         }
     }
-}
-
-
-
-@Preview(showBackground = true)
-@Composable
-fun BvnCheckScreenPreview(){
-    BvnCheckScreen(
-        onBack = {},
-        onProceed = { _, _, _, _ -> }
-    )
 }

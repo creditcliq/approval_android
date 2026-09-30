@@ -14,7 +14,7 @@ import com.creditchek.approval_android.features.identity.presentation.screens.Ap
 
 sealed interface ApprovalStep {
     enum class Identity : ApprovalStep {
-        SPLASH, ERROR, WELCOME, BVN_CHECK, SUCCESS, LIVELINESS
+        SPLASH, ERROR, WELCOME, VERIFICATION_METHOD, BVN_CHECK, NIN_CHECK, SUCCESS, LIVELINESS
     }
 
     enum class Liveliness : ApprovalStep {
@@ -56,6 +56,7 @@ class ApprovalActivity : ComponentActivity() {
                         title = "Configuration Error",
                         message = validationError,
                         actionLabel = "Close",
+                        isDevelopment = config?.environment?.isDevelopment ?: true,
                         onDismiss = {
                             finishWithResult(
                                 SessionResult.Error(

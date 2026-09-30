@@ -9,6 +9,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.creditchek.approval_android.core.theme.ApprovalBlue
+import com.creditchek.approval_android.core.theme.ApprovalHint
 import com.creditchek.approval_android.core.theme.ApprovalMutedButton
 import com.creditchek.approval_android.core.theme.PrimaryButtonShape
 
@@ -28,8 +29,8 @@ fun ApprovalButton(
         colors = ButtonDefaults.buttonColors(
             containerColor = if (isSecondary) ApprovalMutedButton else ApprovalBlue,
             contentColor = if (isSecondary) ApprovalBlue else Color.White,
-            disabledContainerColor = ApprovalBlue.copy(alpha = 0.5f),
-            disabledContentColor = Color.White.copy(alpha = 0.7f)
+            disabledContainerColor = Color(0xFFE2E8F0),
+            disabledContentColor = ApprovalHint
         ),
         modifier = modifier
             .fillMaxWidth()

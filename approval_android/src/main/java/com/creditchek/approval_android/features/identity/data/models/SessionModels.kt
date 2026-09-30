@@ -16,11 +16,13 @@ enum class Status {
 
 enum class Service {
     @SerializedName("bvn") BVN,
+    @SerializedName("nin") NIN,
     @SerializedName("liveness") LIVELINESS
 }
 
 data class UpdateSessionRequest(
     @SerializedName("bvn") val bvn: String? = null,
+    @SerializedName("nin") val nin: String? = null,
     @SerializedName("service") val service: Service? = null,
     @SerializedName("status") val status: Status? = null,
 )
@@ -43,10 +45,13 @@ data class SessionCreatedData(
 
 data class Services(
     @SerializedName("bvn")
-    val bvn: ServiceStatus,
+    val bvn: ServiceStatus? = null,
+
+    @SerializedName("nin")
+    val nin: ServiceStatus? = null,
 
     @SerializedName("liveness")
-    val liveness: ServiceStatus
+    val liveness: ServiceStatus? = null
 )
 
 data class ServiceStatus(

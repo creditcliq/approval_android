@@ -35,7 +35,7 @@ object RetrofitClient {
             .build()
     }
 
-    fun createRetrofit(environment: ApprovalEnv = ApprovalEnv.SANDBOX): Retrofit {
+    fun createRetrofit(environment: ApprovalEnv = ApprovalEnv.PRODUCTION): Retrofit {
         return Retrofit.Builder()
             .baseUrl(ApiConstants.getBaseUrl(environment))
             .client(createOkHttpClient())
@@ -44,7 +44,7 @@ object RetrofitClient {
     }
 
 
-    fun <T> createService(serviceClass: Class<T>, environment: ApprovalEnv = ApprovalEnv.SANDBOX): T {
+    fun <T> createService(serviceClass: Class<T>, environment: ApprovalEnv = ApprovalEnv.PRODUCTION): T {
         return createRetrofit(environment).create(serviceClass)
     }
 }

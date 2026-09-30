@@ -2,6 +2,7 @@ package com.creditchek.approval_android.features.identity.data
 
 import com.creditchek.approval_android.core.network.ApiConstants
 import com.creditchek.approval_android.features.identity.data.models.BvnResponse
+import com.creditchek.approval_android.features.identity.data.models.NinResponse
 import com.creditchek.approval_android.features.liveliness.data.models.ChallengeVerifyRequest
 import com.creditchek.approval_android.features.identity.data.models.CreateSessionRequest
 import com.creditchek.approval_android.features.identity.data.models.SessionCreatedResponse
@@ -46,6 +47,14 @@ interface IdentityApi {
         @Body emptyBody: Map<String, String> = emptyMap()
     ): BvnResponse
 
+    @POST(ApiConstants.VERIFY_IDENTITY_DATA)
+    suspend fun verifyNinData(
+        @Header("token") secretKey: String,
+        @Query("nin") nin: String,
+        @Query("reload") reload: String = "no",
+        @Body emptyBody: Map<String, String> = emptyMap()
+    ): NinResponse
+
     @GET(ApiConstants.LIVENESS_HEALTH)
     suspend fun checkLivenessHealth(): Response<Map<String, Any>>
 
@@ -59,6 +68,11 @@ interface IdentityApi {
     suspend fun getSessionBvnData(
         @Path("sessionId") sessionId: String,
         @Header("token") secretKey: String,
-//        @Body emptyBody: Map<String, String> = emptyMap()
     ): BvnResponse
+
+    @GET("${ApiConstants.SESSION_NIN_DATA}/{sessionId}")
+    suspend fun getSessionNinData(
+        @Path("sessionId") sessionId: String,
+        @Header("token") secretKey: String,
+    ): NinResponse
 }

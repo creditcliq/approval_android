@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import com.creditchek.approval_android.core.shared.components.ApprovalButton
 import com.creditchek.approval_android.core.shared.components.PoweredByCreditChek
 import com.creditchek.approval_android.core.theme.ApprovalCanvas
+import com.creditchek.approval_android.core.session.DevelopmentDecoration
 import com.creditchek.approval_android.core.theme.ApprovalSuccessDark
 import com.creditchek.approval_android.core.theme.ApprovalSuccessRingDark
 import com.creditchek.approval_android.core.theme.ApprovalSuccessRingLight
@@ -38,7 +39,8 @@ import com.creditchek.approval_android.features.identity.presentation.components
 @Composable
 fun VerificationSuccessScreen(
     onDismiss: () -> Unit = {},
-    onProceed: () -> Unit = {}
+    onProceed: () -> Unit = {},
+    isDevelopment: Boolean = false
 ) {
     Column(
         modifier = Modifier
@@ -50,6 +52,15 @@ fun VerificationSuccessScreen(
             title = "Approval Verification",
             onClose = onDismiss
         )
+
+        if (isDevelopment) {
+            Spacer(modifier = Modifier.height(8.dp))
+            DevelopmentDecoration(
+                modifier = Modifier
+                    .padding(horizontal = 20.dp)
+                    .align(Alignment.End)
+            )
+        }
 
         // 2. Body
         Column(

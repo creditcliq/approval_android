@@ -27,6 +27,7 @@ import com.creditchek.approval_android.core.theme.ApprovalTextSecondary
 import com.creditchek.approval_android.core.theme.ApprovalTheme
 import com.creditchek.approval_android.features.identity.presentation.components.ApprovalHeader
 import kotlinx.coroutines.delay
+import com.creditchek.approval_android.core.session.DevelopmentDecoration
 import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
@@ -34,7 +35,8 @@ fun VerificationProcessingScreen(
     onDismiss: () -> Unit = {},
     verifyAction: (suspend () -> Boolean)? = null,
     onSuccess: () -> Unit = {},
-    onFailure: () -> Unit = {}
+    onFailure: () -> Unit = {},
+    isDevelopment: Boolean = false
 ) {
     // 1. Run Verification Coroutine on Mount
     LaunchedEffect(Unit) {
@@ -67,6 +69,15 @@ fun VerificationProcessingScreen(
             title = "Approval Verification",
             onClose = onDismiss
         )
+
+        if (isDevelopment) {
+            Spacer(modifier = Modifier.height(8.dp))
+            DevelopmentDecoration(
+                modifier = Modifier
+                    .padding(horizontal = 20.dp)
+                    .align(Alignment.End)
+            )
+        }
 
         // Center Loading & Text
         Column(

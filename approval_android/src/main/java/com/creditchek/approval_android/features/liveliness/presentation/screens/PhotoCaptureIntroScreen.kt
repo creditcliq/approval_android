@@ -28,6 +28,7 @@ import com.creditchek.approval_android.core.shared.components.DashedBorderCard
 import com.creditchek.approval_android.core.shared.components.PoweredByCreditChek
 import com.creditchek.approval_android.core.theme.*
 import com.creditchek.approval_android.features.identity.presentation.components.*
+import com.creditchek.approval_android.core.session.DevelopmentDecoration
 import com.creditchek.approval_android.R
 
 
@@ -35,7 +36,8 @@ import com.creditchek.approval_android.R
 fun PhotoCaptureIntroScreen(
     onDismiss: () -> Unit,
     onProceed: () -> Unit,
-    isLoading: Boolean = false
+    isLoading: Boolean = false,
+    isDevelopment: Boolean = false
 ) {
     Column(
         modifier = Modifier
@@ -56,7 +58,15 @@ fun PhotoCaptureIntroScreen(
                 .padding(horizontal = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(24.dp))
+            if (isDevelopment) {
+                Spacer(modifier = Modifier.height(8.dp))
+                DevelopmentDecoration(
+                    modifier = Modifier.align(Alignment.End)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+            } else {
+                Spacer(modifier = Modifier.height(24.dp))
+            }
 
             // Center Illustration Guide Circle
             Image(

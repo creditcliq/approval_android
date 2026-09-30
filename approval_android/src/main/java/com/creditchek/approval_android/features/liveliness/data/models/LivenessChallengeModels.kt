@@ -10,7 +10,9 @@ data class ChallengeVerifyRequest(
     @SerializedName("step") val step: String,
     @SerializedName("session_id") val sessionId: String,
     @SerializedName("frame") val frame: String, // 600x600 Base64 JPEG data URL
-    @SerializedName("restart") val restart: Boolean = false
+    @SerializedName("restart") val restart: Boolean = false,
+    @SerializedName("idType") val idType: String? = null,
+    @SerializedName("environment") val environment: String? = null
 )
 
 data class ValidationSuccess(

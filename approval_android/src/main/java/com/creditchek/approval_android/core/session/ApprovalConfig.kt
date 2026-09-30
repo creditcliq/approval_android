@@ -3,8 +3,11 @@ package com.creditchek.approval_android.core.session
 import java.io.Serializable
 
 enum class ApprovalEnv {
-    SANDBOX,
-    PRODUCTION,
+    DEVELOPMENT,
+    PRODUCTION;
+
+    val isDevelopment: Boolean
+        get() = this == DEVELOPMENT
 }
 
 /** Runtime configuration for a CreditChek approval session. */
@@ -13,7 +16,7 @@ data class ApprovalConfig(
         val modules: List<ApprovalModule> = listOf(ApprovalModule.IDENTITY),
         val userData: AUserData? = null,
         val sessionId: String,
-        val environment: ApprovalEnv = ApprovalEnv.SANDBOX
+        val environment: ApprovalEnv = ApprovalEnv.PRODUCTION
 ) : Serializable {
         fun validate(): String? {
             return  when {
@@ -22,8 +25,5 @@ data class ApprovalConfig(
                 sessionId.isBlank() -> "ApprovalConfig.sessionId cannot be empty"
                 else -> null
             }
-//            require(publicKey.isNotBlank()) {  }
-//            require(modules.isNotEmpty()) { }
-//            require(sessionId.isNotBlank()) { "ApprovalConfig.sessionId cannot be empty" }
         }
 }
