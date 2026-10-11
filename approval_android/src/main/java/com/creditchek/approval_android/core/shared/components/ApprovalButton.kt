@@ -11,6 +11,7 @@ import androidx.compose.ui.unit.sp
 import com.creditchek.approval_android.core.theme.ApprovalBlue
 import com.creditchek.approval_android.core.theme.ApprovalHint
 import com.creditchek.approval_android.core.theme.ApprovalMutedButton
+import com.creditchek.approval_android.core.theme.DynamicThemeConfig
 import com.creditchek.approval_android.core.theme.PrimaryButtonShape
 
 @Composable
@@ -20,14 +21,15 @@ fun ApprovalButton(
     modifier: Modifier = Modifier,
     isSecondary: Boolean = false,
     isLoading: Boolean = false,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    themeConfig: DynamicThemeConfig? = null
 ) {
     Button(
         onClick = onClick,
         enabled = enabled && !isLoading,
         shape = PrimaryButtonShape,
         colors = ButtonDefaults.buttonColors(
-            containerColor = if (isSecondary) ApprovalMutedButton else ApprovalBlue,
+            containerColor = if (isSecondary) ApprovalMutedButton else themeConfig?.primaryColor ?: ApprovalBlue,
             contentColor = if (isSecondary) ApprovalBlue else Color.White,
             disabledContainerColor = Color(0xFFE2E8F0),
             disabledContentColor = ApprovalHint

@@ -15,6 +15,17 @@ class IdentityRepository(
     private val api: IdentityApi =
         RetrofitClient.createService(IdentityApi::class.java, environment)
 
+    // --- Get config data from widget setup ----
+    suspend fun getConfigData(widgetId: String): Result<AppConfig> =
+        safeApiCall("Get config data") {
+            val response = api.getConfigData(widgetId = widgetId)
+            if (response.success && response.data != null) {
+                response.data
+            } else {
+                throw Exception(response.message ?: "Failed to fetch config data")
+            }
+        }
+
     // ── 1. Validate Public Key ──
     suspend fun validatePublicKey(publicKey: String): Result<ValidKeyData> =
         safeApiCall("Public key validation") {

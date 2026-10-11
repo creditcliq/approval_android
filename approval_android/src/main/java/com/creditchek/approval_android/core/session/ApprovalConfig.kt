@@ -13,10 +13,11 @@ enum class ApprovalEnv {
 /** Runtime configuration for a CreditChek approval session. */
 data class ApprovalConfig(
         val publicKey: String,
-        val modules: List<ApprovalModule> = listOf(ApprovalModule.IDENTITY),
+        val modules: List<ApprovalModule> = listOf(ApprovalModule.IDENTITY), //TODO REMOVE this
         val userData: AUserData? = null,
         val sessionId: String,
-        val environment: ApprovalEnv = ApprovalEnv.PRODUCTION
+        val widgetId: String,
+        val environment: ApprovalEnv = ApprovalEnv.PRODUCTION //TODO REMOVE this
 ) : Serializable {
         fun validate(): String? {
             return  when {

@@ -3,21 +3,16 @@ package com.creditchek.approval_android.core.theme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
+
+val LocalApprovalThemeConfig = staticCompositionLocalOf { DynamicThemeConfig() }
+
+
 // Light Color Scheme for the SDK
-private val ApprovalColorScheme = lightColorScheme(
-    primary = ApprovalBlue,
-    onPrimary = Color.White,
-    primaryContainer = ApprovalMutedButton,
-    onPrimaryContainer = ApprovalBlue,
-    background = ApprovalCanvas,
-    onBackground = ApprovalTextPrimary,
-    surface = Color.White,
-    onSurface = ApprovalTextPrimary,
-    error = ApprovalDanger,
-    onError = Color.White
-)
+
 
 /**
  * Main Theme wrapper for the Approval Android SDK.
@@ -25,12 +20,32 @@ private val ApprovalColorScheme = lightColorScheme(
  */
 @Composable
 fun ApprovalTheme(
+    themeConfig: DynamicThemeConfig = DynamicThemeConfig(),
     content: @Composable () -> Unit
 ) {
-    MaterialTheme(
-        colorScheme = ApprovalColorScheme,
-        typography = ApprovalTypography,
-        shapes = ApprovalShapes,
-        content = content
+
+
+    val dynamicColorScheme = lightColorScheme(
+        primary = themeConfig.primaryColor,
+        onPrimary = Color.White,
+        primaryContainer = themeConfig.primaryColor.copy(alpha = 0.15f),
+        onPrimaryContainer = themeConfig.primaryColor,
+        background = ApprovalCanvas,
+        onBackground = ApprovalTextPrimary,
+        surface = Color.White,
+        onSurface = ApprovalTextPrimary,
+        error = ApprovalDanger,
+        onError = Color.White
     )
+
+    CompositionLocalProvider(LocalApprovalThemeConfig provides themeConfig) {
+
+        MaterialTheme(
+            colorScheme = dynamicColorScheme,
+            typography = ApprovalTypography,
+            shapes = ApprovalShapes,
+            content = content
+        )
+    }
+
 }
