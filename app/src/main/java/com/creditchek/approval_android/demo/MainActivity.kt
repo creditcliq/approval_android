@@ -34,8 +34,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.creditchek.approval_android.CreditChekApproval
 import com.creditchek.approval_android.core.session.ApprovalConfig
-import com.creditchek.approval_android.core.session.ApprovalEnv
-import com.creditchek.approval_android.core.session.ApprovalModule
 import com.creditchek.approval_android.core.session.SessionResult
 
 class MainActivity : ComponentActivity() {
@@ -118,15 +116,11 @@ fun DemoAppScreen() {
                     statusColor = Color(0xFF064BEF)
 
 
-                    // 👉 Launch the SDK with 1 line of code:
                     CreditChekApproval.start(
                         context = context,
                         config = ApprovalConfig(
-//                            publicKey = "AZAdIhf+s+S2XxqtedB6p4c0Pg4wTmSbzF8OWbTgcwhsn6RKshLjpNdfoOG0CMQn",
                             publicKey = "vy6LZWI/l/pOc868z8LAgEBCdvsSomPev2TxLqIdlNZIueMM0Agl8G88zxyE65LN",
-                            environment = ApprovalEnv.PRODUCTION,
-                            modules = listOf(ApprovalModule.IDENTITY, ApprovalModule.LIVELINESS),
-                            sessionId = "ad481b70-85b3-4007-9618-c468ea51bbf6",
+                            sessionId = "c2821c0c-cf20-4539-8be0-ad363e78fc28",
                             widgetId = "6a1d5a99a5746db9fe0cfcf0"
                         )
                     ) { result ->

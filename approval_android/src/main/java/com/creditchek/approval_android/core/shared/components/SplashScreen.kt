@@ -1,4 +1,4 @@
-package com.creditchek.approval_android.features.identity.presentation.screens
+package com.creditchek.approval_android.core.shared.components
 
 
 import androidx.compose.animation.core.FastOutSlowInEasing

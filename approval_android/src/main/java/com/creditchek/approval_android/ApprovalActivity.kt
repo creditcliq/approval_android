@@ -8,9 +8,7 @@ import androidx.activity.compose.setContent
 
 import com.creditchek.approval_android.core.session.ApprovalConfig
 import com.creditchek.approval_android.core.session.SessionResult
-import com.creditchek.approval_android.core.theme.ApprovalTheme
-import com.creditchek.approval_android.features.identity.presentation.ApprovalFlowNavigator
-import com.creditchek.approval_android.features.identity.presentation.screens.ApprovalErrorScreen
+import com.creditchek.approval_android.core.shared.components.ApprovalErrorScreen
 
 sealed interface ApprovalStep {
     enum class Identity : ApprovalStep {
@@ -49,14 +47,14 @@ class ApprovalActivity : ComponentActivity() {
         }
 
         setContent {
-            ApprovalTheme {
+//            ApprovalTheme {
                 if (validationError != null) {
                     // 3. Display the Error Screen instead of crashing
                     ApprovalErrorScreen(
                         title = "Configuration Error",
                         message = validationError,
                         actionLabel = "Close",
-                        isDevelopment = config?.environment?.isDevelopment ?: true,
+                        isDevelopment = true,
                         onDismiss = {
                             finishWithResult(
                                 SessionResult.Error(
@@ -67,11 +65,11 @@ class ApprovalActivity : ComponentActivity() {
                         }
                     )
                 } else {
-                    ApprovalFlowNavigator(config = config!!) { result ->
+                    ApprovalCoordinator(config = config!!) { result ->
                         finishWithResult(result)
                     }
                 }
-            }
+//            }
         }
     }
 

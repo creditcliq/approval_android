@@ -12,7 +12,6 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
-import com.creditchek.approval_android.features.liveliness.data.BitmapUtils
 import com.creditchek.approval_android.features.liveliness.data.models.FaceChallengeCapture
 import com.creditchek.approval_android.features.liveliness.data.models.FaceVerificationStep
 import com.creditchek.approval_android.features.liveliness.data.models.ValidationData

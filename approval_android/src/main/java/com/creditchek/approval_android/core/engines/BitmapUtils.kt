@@ -1,7 +1,10 @@
 package com.creditchek.approval_android.core.engines
 
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.util.Base64
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.graphics.scale
 import java.io.ByteArrayOutputStream
 
@@ -39,5 +42,25 @@ object BitmapUtils {
         val yOffset = (height - dimension) / 2
 
         return Bitmap.createBitmap(srcBmp, xOffset, yOffset, dimension, dimension)
+    }
+
+
+    /**
+     * Decode base 64 string to Bitmap image
+     */
+    fun decodeBase64ToBitmap(base64String: String?): ImageBitmap? {
+        if (base64String.isNullOrBlank()) return null
+        return try {
+            val cleanBase64 = if (base64String.contains(",")) {
+                base64String.substringAfter(",")
+            } else {
+                base64String
+            }
+            val decodedBytes = Base64.decode(cleanBase64, Base64.DEFAULT)
+            val bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0,decodedBytes.size)
+            bitmap?.asImageBitmap()
+        } catch (e: Exception){
+            null
+        }
     }
 }

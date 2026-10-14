@@ -37,7 +37,7 @@ import com.creditchek.approval_android.core.theme.*
 import com.creditchek.approval_android.features.liveliness.data.models.FaceChallengeCapture
 import com.creditchek.approval_android.features.liveliness.data.models.ValidationData
 import com.creditchek.approval_android.core.session.DevelopmentDecoration
-import com.creditchek.approval_android.features.identity.presentation.components.ApprovalHeader
+import com.creditchek.approval_android.core.shared.components.ApprovalHeader
 import com.creditchek.approval_android.features.liveliness.presentation.components.NetworkStatusPill
 import com.creditchek.approval_android.features.liveliness.presentation.components.drawFaceOvalBorder
 
@@ -138,15 +138,18 @@ fun LivelinessCameraScreen(
                 .padding(horizontal = 20.dp, vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Box(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 NetworkStatusPill(
-                    quality = networkQuality,
-                    modifier = Modifier.align(Alignment.Center)
+                    quality = networkQuality
                 )
                 if (isDevelopment) {
-                    DevelopmentDecoration(
-                        modifier = Modifier.align(Alignment.CenterEnd)
-                    )
+                    DevelopmentDecoration()
+                } else {
+                    Spacer(modifier = Modifier.width(1.dp))
                 }
             }
 
@@ -186,7 +189,7 @@ fun LivelinessCameraScreen(
 
                     // Progress Ring Sweeping around the Oval Frame
                     val ringColor = when {
-                        !livenessState.isFaceAligned -> ApprovalBlue
+                        !livenessState.isFaceAligned -> LocalApprovalThemeConfig.current.primaryColor
                         livenessState.isLowLight || livenessState.isTooClose || livenessState.isTooFar || livenessState.hasGlasses || livenessState.hasHeadwear -> ApprovalWarning
                         else -> ApprovalSuccess
                     }
@@ -225,7 +228,7 @@ fun LivelinessCameraScreen(
             val guidanceColor = when {
                 !livenessState.isFaceAligned -> ApprovalTextSecondary
                 livenessState.isLowLight || livenessState.isTooClose || livenessState.isTooFar || livenessState.hasGlasses || livenessState.hasHeadwear -> ApprovalWarning
-                else -> ApprovalBlue
+                else -> LocalApprovalThemeConfig.current.primaryColor
             }
 
             Text(
@@ -328,6 +331,7 @@ private fun AccessoryWarning(text: String) {
 
 @Composable
 private fun CameraLoading() {
+    val theme = LocalApprovalThemeConfig.current
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -339,7 +343,7 @@ private fun CameraLoading() {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             CircularProgressIndicator(
-                color = ApprovalBlue,
+                color = theme.primaryColor,
                 strokeWidth = 2.dp,
                 modifier = Modifier.size(28.dp)
             )

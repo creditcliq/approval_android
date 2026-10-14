@@ -30,12 +30,12 @@ import androidx.compose.ui.unit.sp
 import com.creditchek.approval_android.R
 import com.creditchek.approval_android.core.shared.components.ApprovalButton
 import com.creditchek.approval_android.core.shared.components.PoweredByCreditChek
-import com.creditchek.approval_android.core.theme.ApprovalBlue
 import com.creditchek.approval_android.core.theme.ApprovalCanvas
 import com.creditchek.approval_android.core.session.DevelopmentDecoration
 import com.creditchek.approval_android.core.theme.ApprovalDanger
 import com.creditchek.approval_android.core.theme.ApprovalTheme
-import com.creditchek.approval_android.features.identity.presentation.components.ApprovalHeader
+import com.creditchek.approval_android.core.theme.LocalApprovalThemeConfig
+import com.creditchek.approval_android.core.shared.components.ApprovalHeader
 import com.creditchek.approval_android.features.liveliness.presentation.components.drawFaceOvalBorder
 
 @Composable
@@ -47,6 +47,8 @@ fun SelfieRetryScreen(
     errorMessage: String? = null,
     isDevelopment: Boolean = false
 ) {
+    val theme = LocalApprovalThemeConfig.current
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -80,7 +82,7 @@ fun SelfieRetryScreen(
                 text = "Let’s Try That Again",
                 fontSize = 22.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = ApprovalBlue,
+                color = theme.primaryColor,
                 textAlign = TextAlign.Center
             )
 
@@ -89,7 +91,7 @@ fun SelfieRetryScreen(
             Text(
                 text = "We Need a Clearer Video Selfie",
                 fontSize = 14.sp,
-                color = ApprovalBlue,
+                color = LocalApprovalThemeConfig.current.primaryColor,
                 textAlign = TextAlign.Center
             )
 
@@ -124,8 +126,9 @@ fun SelfieRetryScreen(
                 Canvas(
                     modifier = Modifier.size(width = 132.dp, height = 170.dp)
                 ) {
+
                     drawFaceOvalBorder(
-                        color = ApprovalBlue,
+                        color = theme.primaryColor,
                         strokeWidth = 5f
                     )
                 }
@@ -137,7 +140,7 @@ fun SelfieRetryScreen(
                 text = "Ideal Pose",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = ApprovalBlue
+                color = theme.primaryColor
             )
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -148,7 +151,7 @@ fun SelfieRetryScreen(
                 fontSize = 14.sp,
                 lineHeight = 18.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = ApprovalBlue,
+                color = LocalApprovalThemeConfig.current.primaryColor,
                 textAlign = TextAlign.Center
             )
 
@@ -165,7 +168,16 @@ fun SelfieRetryScreen(
                 Spacer(modifier = Modifier.height(12.dp))
             }
 
-            // Action Button
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
+        // 3. Fixed Bottom Section (Action Button & PoweredByCreditChek)
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
             ApprovalButton(
                 text = "Try Again",
                 onClick = onTryAgain,
@@ -173,9 +185,8 @@ fun SelfieRetryScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(20.dp))
             PoweredByCreditChek()
-            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }

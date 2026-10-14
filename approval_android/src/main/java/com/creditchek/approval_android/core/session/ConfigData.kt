@@ -1,4 +1,4 @@
-package com.creditchek.approval_android.features.identity.data.models
+package com.creditchek.approval_android.core.session
 
 import com.google.gson.annotations.SerializedName
 
@@ -25,7 +25,7 @@ data class AppConfig(
     val type: String,
 
     @SerializedName("color")
-    val color: String,
+    val color: String?,
 
     @SerializedName("multipleApproval")
     val multipleApproval: Boolean,
@@ -49,25 +49,31 @@ data class AppConfig(
     val updatedAt: String,
 
     @SerializedName("__v")
-    val v: Int,
+    val v: Int? = null,
 
     @SerializedName("order")
-    val order: List<String>,
+    val order: List<String> = emptyList(),
 
     @SerializedName("displayName")
-    val displayName: String,
+    val displayName: String?,
 
     @SerializedName("supportEmail")
-    val supportEmail: String,
+    val supportEmail: String?,
 
     @SerializedName("environment")
-    val environment: String,
+    val environment: String?,
 
     @SerializedName("livenessSDK")
     val livenessSDK: Boolean,
 
     @SerializedName("logo")
-    val logo: String
+    val logo: String?,
+
+    @SerializedName("services")
+    val services: List<String> = emptyList(),
+
+    @SerializedName("status")
+    val status: String? = null
 )
 
 data class AppInfo(
@@ -75,8 +81,8 @@ data class AppInfo(
     val id: String,
 
     @SerializedName("appName")
-    val appName: String,
+    val appName: String?,
 
     @SerializedName("displayName")
-    val displayName: String
+    val displayName: String?
 )

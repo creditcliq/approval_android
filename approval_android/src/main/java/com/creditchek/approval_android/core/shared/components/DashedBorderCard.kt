@@ -11,13 +11,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
-import com.creditchek.approval_android.core.theme.ApprovalBlue
+import com.creditchek.approval_android.core.theme.LocalApprovalThemeConfig
 import com.creditchek.approval_android.core.theme.ToastCardShape
 
 @Composable
 fun DashedBorderCard(
     modifier: Modifier = Modifier,
-    strokeColor: Color = ApprovalBlue,
+    strokeColor: Color = LocalApprovalThemeConfig.current.primaryColor,
     content: @Composable () -> Unit
 ) {
     Box(

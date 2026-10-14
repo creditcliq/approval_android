@@ -24,6 +24,7 @@ import com.creditchek.approval_android.core.session.AUserData
 import com.creditchek.approval_android.core.session.DevelopmentDecoration
 import com.creditchek.approval_android.core.shared.components.ApprovalButton
 import com.creditchek.approval_android.core.shared.components.ApprovalTextField
+import com.creditchek.approval_android.core.shared.components.BrandLogo
 import com.creditchek.approval_android.core.shared.components.PoweredByCreditChek
 import com.creditchek.approval_android.core.theme.*
 import java.text.SimpleDateFormat
@@ -74,7 +75,11 @@ fun NinCheckScreen(
                         showDatePicker = false
                     }
                 ) {
-                    Text("OK", color = ApprovalBlue, fontWeight = FontWeight.Bold)
+                    Text(
+                        "OK",
+                        color = LocalApprovalThemeConfig.current.primaryColor,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             },
             dismissButton = {
@@ -87,8 +92,8 @@ fun NinCheckScreen(
                 state = datePickerState,
                 colors = DatePickerDefaults.colors(
                     containerColor = Color.White,
-                    selectedDayContainerColor = ApprovalBlue,
-                    todayDateBorderColor = ApprovalBlue
+                    selectedDayContainerColor = LocalApprovalThemeConfig.current.primaryColor,
+                    todayDateBorderColor = LocalApprovalThemeConfig.current.primaryColor
                 )
             )
         }
@@ -147,15 +152,16 @@ fun NinCheckScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 12.dp),
+                .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            val theme = LocalApprovalThemeConfig.current
             IconButton(onClick = onBack) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Back",
-                    tint = ApprovalBlue,
-                    modifier = Modifier.size(26.dp)
+                    tint = theme.primaryColor,
+                    modifier = Modifier.size(24.dp)
                 )
             }
 
@@ -177,7 +183,13 @@ fun NinCheckScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.size(48.dp))
+            BrandLogo(
+                logoSource = theme.logoUrl,
+                contentDescription = theme.businessName,
+                modifier = Modifier
+                    .height(28.dp)
+                    .widthIn(max = 80.dp)
+            )
         }
 
         // 2. Form Content
@@ -281,10 +293,17 @@ fun NinCheckScreen(
                 },
                 isLoading = isLoading
             )
-
-            Spacer(modifier = Modifier.height(24.dp))
-            PoweredByCreditChek()
             Spacer(modifier = Modifier.height(16.dp))
+        }
+
+        // 3. Fixed Bottom Section
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            PoweredByCreditChek()
         }
     }
 }

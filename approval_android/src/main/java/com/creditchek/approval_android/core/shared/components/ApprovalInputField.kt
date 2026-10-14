@@ -34,15 +34,13 @@ fun ApprovalTextField(
     isError: Boolean = false,
     errorMessage: String? = null
 ) {
+
+    val theme = LocalApprovalThemeConfig.current
+
     Column(modifier = modifier.fillMaxWidth()) {
-        // 1. Label with Red Asterisk
+        // 1. Label with
         val labelText = buildAnnotatedString {
             append(label)
-//            if (isRequired) {
-//                withStyle(SpanStyle(color = ApprovalDanger)) {
-//                    append(" *")
-//                }
-//            }
         }
 
         Text(
@@ -75,7 +73,7 @@ fun ApprovalTextField(
                         Icon(
                             imageVector = icon,
                             contentDescription = null,
-                            tint = ApprovalBlue,
+                            tint = theme.primaryColor,
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -85,7 +83,7 @@ fun ApprovalTextField(
                         Icon(
                             imageVector = icon,
                             contentDescription = null,
-                            tint = ApprovalBlue,
+                            tint = theme.primaryColor,
                             modifier = Modifier
                                 .size(20.dp)
                                 .then(
@@ -103,10 +101,10 @@ fun ApprovalTextField(
                     unfocusedContainerColor = ApprovalField,
                     disabledContainerColor = ApprovalField,
                     errorContainerColor = ApprovalField,
-                    focusedBorderColor = ApprovalBlue,
+                    focusedBorderColor = theme.primaryColor,
                     unfocusedBorderColor = ApprovalInputBorder,
                     errorBorderColor = ApprovalDanger,
-                    cursorColor = ApprovalBlue,
+                    cursorColor = theme.primaryColor,
                     focusedTextColor = ApprovalTextPrimary,
                     unfocusedTextColor = ApprovalTextPrimary
                 )

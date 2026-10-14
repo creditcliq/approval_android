@@ -1,4 +1,4 @@
-package com.creditchek.approval_android.features.identity.presentation.screens
+package com.creditchek.approval_android.core.shared.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,15 +29,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.creditchek.approval_android.R
-import com.creditchek.approval_android.core.shared.components.ApprovalButton
-import com.creditchek.approval_android.core.shared.components.PoweredByCreditChek
-import com.creditchek.approval_android.core.theme.ApprovalBlue
 import com.creditchek.approval_android.core.theme.ApprovalCanvas
 import com.creditchek.approval_android.core.theme.ApprovalDanger
 import com.creditchek.approval_android.core.theme.ApprovalTextSecondary
 import com.creditchek.approval_android.core.theme.ApprovalTheme
 import com.creditchek.approval_android.core.session.DevelopmentDecoration
-import com.creditchek.approval_android.features.identity.presentation.components.ApprovalHeader
+import com.creditchek.approval_android.core.theme.LocalApprovalThemeConfig
+import coil.compose.AsyncImage
 
 // ==========================================
 // 🚨 ApprovalErrorScreen
@@ -54,6 +51,9 @@ fun ApprovalErrorScreen(
     onDismiss: () -> Unit,
     onRetry: (() -> Unit)? = null
 ) {
+
+    val theme = LocalApprovalThemeConfig.current
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -82,19 +82,6 @@ fun ApprovalErrorScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(16.dp))
-
-            // Logo Header
-            Box(
-                modifier = Modifier.size(120.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.ic_logo),
-                        contentDescription = "CreditChek Logo",
-//                        modifier = Modifier.fillMaxSize()
-                    )
-
-            }
 
             Spacer(modifier = Modifier.weight(1f))
 

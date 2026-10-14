@@ -27,7 +27,7 @@ import com.creditchek.approval_android.core.shared.components.ApprovalButton
 import com.creditchek.approval_android.core.shared.components.DashedBorderCard
 import com.creditchek.approval_android.core.shared.components.PoweredByCreditChek
 import com.creditchek.approval_android.core.theme.*
-import com.creditchek.approval_android.features.identity.presentation.components.*
+import com.creditchek.approval_android.core.shared.components.ApprovalHeader
 import com.creditchek.approval_android.core.session.DevelopmentDecoration
 import com.creditchek.approval_android.R
 
@@ -39,6 +39,9 @@ fun PhotoCaptureIntroScreen(
     isLoading: Boolean = false,
     isDevelopment: Boolean = false
 ) {
+    val theme = LocalApprovalThemeConfig.current
+
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -114,10 +117,16 @@ fun PhotoCaptureIntroScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.weight(1f))
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(24.dp))
+        }
 
-            // 3. Action Buttons (Dismiss & Proceed)
+        // 3. Fixed Bottom Section (Action Buttons & PoweredByCreditChek)
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(14.dp)
@@ -139,7 +148,6 @@ fun PhotoCaptureIntroScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
             PoweredByCreditChek()
-            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
@@ -149,6 +157,7 @@ private fun CaptureTipItem(
     icon: ImageVector,
     text: String
 ) {
+    val theme = LocalApprovalThemeConfig.current
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp)
@@ -157,13 +166,13 @@ private fun CaptureTipItem(
         Box(
             modifier = Modifier
                 .size(36.dp)
-                .background(Color(0xFFE6ECFC), shape = CircleShape),
+                .background(theme.primaryColor.copy(alpha = 0.12f), shape = CircleShape),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = ApprovalBlue,
+                tint = theme.primaryColor,
                 modifier = Modifier.size(20.dp)
             )
         }

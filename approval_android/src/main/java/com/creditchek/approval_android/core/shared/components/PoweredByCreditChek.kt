@@ -12,7 +12,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.creditchek.approval_android.R
-import com.creditchek.approval_android.core.theme.ApprovalBlue
 import com.creditchek.approval_android.core.theme.ApprovalTextSecondary
 
 @Composable

@@ -1,6 +1,7 @@
 package com.creditchek.approval_android.features.identity.data
 
 import com.creditchek.approval_android.core.network.RetrofitClient
+import com.creditchek.approval_android.core.session.AppConfig
 import com.creditchek.approval_android.core.session.ApprovalEnv
 import com.creditchek.approval_android.features.identity.data.models.*
 import com.creditchek.approval_android.features.liveliness.data.models.ChallengeVerifyRequest
@@ -105,19 +106,19 @@ class IdentityRepository(
         }
     }
 
-    suspend fun updateSessionWithBvn(
-        sessionId: String,
-        secretKey: String,
-        bvn: String? = null,
-        status: Status? = null,
-        service: Service? = null
-    ): Result<Unit> = updateSession(
-        sessionId = sessionId,
-        secretKey = secretKey,
-        bvn = bvn,
-        status = status,
-        service = service
-    )
+//    suspend fun updateSessionWithBvn(
+//        sessionId: String,
+//        secretKey: String,
+//        bvn: String? = null,
+//        status: Status? = null,
+//        service: Service? = null
+//    ): Result<Unit> = updateSession(
+//        sessionId = sessionId,
+//        secretKey = secretKey,
+//        bvn = bvn,
+//        status = status,
+//        service = service
+//    )
 
     // ── 5. Get Widget Session ──
     suspend fun getWidgetSession(sessionId: String, secretKey: String): Result<SessionCreatedData> =

@@ -2,7 +2,7 @@ package com.creditchek.approval_android.features.identity.data
 
 import com.creditchek.approval_android.core.network.ApiConstants
 import com.creditchek.approval_android.features.identity.data.models.BvnResponse
-import com.creditchek.approval_android.features.identity.data.models.ConfigDataResponse
+import com.creditchek.approval_android.core.session.ConfigDataResponse
 import com.creditchek.approval_android.features.identity.data.models.NinResponse
 import com.creditchek.approval_android.features.liveliness.data.models.ChallengeVerifyRequest
 import com.creditchek.approval_android.features.identity.data.models.CreateSessionRequest

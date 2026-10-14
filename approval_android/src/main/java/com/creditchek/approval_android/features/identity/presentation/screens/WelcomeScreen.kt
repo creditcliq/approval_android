@@ -25,10 +25,11 @@ import androidx.compose.ui.unit.sp
 import com.creditchek.approval_android.core.shared.components.ApprovalButton
 import com.creditchek.approval_android.core.shared.components.DashedBorderCard
 import com.creditchek.approval_android.core.shared.components.PoweredByCreditChek
+import com.creditchek.approval_android.core.shared.components.ApprovalHeader
 import com.creditchek.approval_android.core.theme.*
-import com.creditchek.approval_android.features.identity.presentation.components.*
 import com.creditchek.approval_android.R
 import com.creditchek.approval_android.core.session.DevelopmentDecoration
+import com.creditchek.approval_android.core.shared.components.BrandLogo
 
 @Composable
 fun WelcomeScreen(
@@ -39,13 +40,18 @@ fun WelcomeScreen(
     onPrivacyClick: () -> Unit = {},
     onTermsClick: () -> Unit = {}
 ) {
+
+    val theme = LocalApprovalThemeConfig.current
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(ApprovalCanvas)
     ) {
         ApprovalHeader(
-            title = "Approval Verification", onClose = onDismiss
+            title = "Approval Verification",
+            showLogo = false,
+            onClose = onDismiss
         )
 
         Column(
@@ -64,9 +70,9 @@ fun WelcomeScreen(
                 Spacer(modifier = Modifier.height(24.dp))
             }
 
-            Image(
-                painter = painterResource(id = R.drawable.ic_logo),
-                contentDescription = null,
+            BrandLogo(
+                logoSource = theme.logoUrl,
+                contentDescription = theme.businessName,
                 modifier = Modifier.size(120.dp)
             )
 
@@ -106,9 +112,16 @@ fun WelcomeScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.weight(1f))
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(24.dp))
+        }
 
+        // Fixed Bottom Section
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(14.dp)
@@ -132,11 +145,11 @@ fun WelcomeScreen(
 
             val legalText = buildAnnotatedString {
                 append("Your privacy and security are our top priorities. By proceeding, you agree to our ")
-                withStyle(SpanStyle(color = ApprovalBlue, fontWeight = FontWeight.SemiBold)) {
+                withStyle(SpanStyle(color = theme.primaryColor, fontWeight = FontWeight.SemiBold)) {
                     append("Privacy Policy")
                 }
                 append(" and ")
-                withStyle(SpanStyle(color = ApprovalBlue, fontWeight = FontWeight.SemiBold)) {
+                withStyle(SpanStyle(color = theme.primaryColor, fontWeight = FontWeight.SemiBold)) {
                     append("Terms & Conditions")
                 }
                 append(".")

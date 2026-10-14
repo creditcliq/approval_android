@@ -1,5 +1,6 @@
-package com.creditchek.approval_android.features.identity.data
+package com.creditchek.approval_android.core.session
 
+import com.creditchek.approval_android.core.session.ApprovalEnv
 import com.creditchek.approval_android.features.identity.data.models.BvnDetails
 import com.creditchek.approval_android.features.identity.data.models.NinDetails
 import com.creditchek.approval_android.features.identity.data.models.Services
@@ -12,6 +13,7 @@ data class SharedSessionContext(
     val publicKey: String = "",
     val secretKey: String = "",
     val sessionId: String = "",
+    val widgetId: String = "",
 
     // 2. Merchant / Business name to display in the header
     val businessName: String = "",
@@ -24,7 +26,9 @@ data class SharedSessionContext(
     val selectedIdType: String = "BVN",
 
     // 5. Services supported on the session
-    val services: Services? = null
+    val services: Services? = null,
+
+    val environment: ApprovalEnv = ApprovalEnv.DEVELOPMENT,
 ) {
     val identityImage: String?
         get() = if (selectedIdType == "NIN") {

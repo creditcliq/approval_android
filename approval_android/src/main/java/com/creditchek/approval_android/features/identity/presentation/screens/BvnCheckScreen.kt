@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.sp
 import com.creditchek.approval_android.core.session.AUserData
 import com.creditchek.approval_android.core.shared.components.ApprovalButton
 import com.creditchek.approval_android.core.shared.components.ApprovalTextField
+import com.creditchek.approval_android.core.shared.components.BrandLogo
 import com.creditchek.approval_android.core.shared.components.PoweredByCreditChek
 import com.creditchek.approval_android.core.theme.*
 import java.text.SimpleDateFormat
@@ -53,48 +54,7 @@ fun BvnCheckScreen(
 
     var showDatePicker by remember { mutableStateOf(false) }
 
-    /*
-    // Confirmation Dialog with Price (₦50)
-    if (showConfirmDialog) {
-        AlertDialog(
-            onDismissRequest = { showConfirmDialog = false },
-            title = {
-                Text(
-                    text = "Confirm Verification",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = ApprovalTextPrimary
-                )
-            },
-            text = {
-                Text(
-                    text = "This BVN verification will incur a fee of ₦50. Do you want to proceed?",
-                    fontSize = 14.sp,
-                    color = ApprovalTextSecondary,
-                    lineHeight = 20.sp
-                )
-            },
-            confirmButton = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    ApprovalButton(
-                        text = "Proceed",
-                        onClick = {
-                            showConfirmDialog = false
-                            onProceed(firstName.trim(), lastName.trim(), dob.trim(), bvn.trim())
-                        }
-                    )
-                    ApprovalButton(
-                        isSecondary = true,
-                        text = "Cancel",
-                        onClick = { showConfirmDialog = false }
-                    )
-                }
-            },
-            shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
-            containerColor = androidx.compose.ui.graphics.Color.White
-        )
-    }
-    */
+    val theme = LocalApprovalThemeConfig.current
 
     // DatePicker Dialog
     if (showDatePicker) {
@@ -105,7 +65,10 @@ fun BvnCheckScreen(
             onDismissRequest = { showDatePicker = false },
             shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
             colors = DatePickerDefaults.colors(
-                containerColor = androidx.compose.ui.graphics.Color.White
+                containerColor = androidx.compose.ui.graphics.Color.White,
+                currentYearContentColor = theme.primaryColor,
+                dayContentColor = theme.primaryColor,
+                weekdayContentColor = theme.primaryColor
             ),
             confirmButton = {
                 TextButton(
@@ -117,7 +80,7 @@ fun BvnCheckScreen(
                         showDatePicker = false
                     }
                 ) {
-                    Text("OK", color = ApprovalBlue, fontWeight = FontWeight.Bold)
+                    Text("OK", color = theme.primaryColor, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
@@ -130,8 +93,8 @@ fun BvnCheckScreen(
                 state = datePickerState,
                 colors = DatePickerDefaults.colors(
                     containerColor = androidx.compose.ui.graphics.Color.White,
-                    selectedDayContainerColor = ApprovalBlue,
-                    todayDateBorderColor = ApprovalBlue
+                    selectedDayContainerColor = theme.primaryColor,
+                    todayDateBorderColor = theme.primaryColor,
                 )
             )
         }
@@ -147,15 +110,15 @@ fun BvnCheckScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 12.dp),
+                .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onBack) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Back",
-                    tint = ApprovalBlue,
-                    modifier = Modifier.size(26.dp)
+                    tint = theme.primaryColor,
+                    modifier = Modifier.size(24.dp)
                 )
             }
 
@@ -177,8 +140,13 @@ fun BvnCheckScreen(
                 )
             }
 
-            // Empty spacer to balance the back button width
-            Spacer(modifier = Modifier.size(48.dp))
+            BrandLogo(
+                logoSource = theme.logoUrl,
+                contentDescription = theme.businessName,
+                modifier = Modifier
+                    .height(28.dp)
+                    .widthIn(max = 80.dp)
+            )
         }
 
         // 2. Form Content
@@ -284,10 +252,17 @@ fun BvnCheckScreen(
                 },
                 isLoading = isLoading
             )
-
-            Spacer(modifier = Modifier.height(24.dp))
-            PoweredByCreditChek()
             Spacer(modifier = Modifier.height(16.dp))
+        }
+
+        // 3. Fixed Bottom Section
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            PoweredByCreditChek()
         }
     }
 }

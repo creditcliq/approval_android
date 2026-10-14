@@ -1,4 +1,4 @@
-package com.creditchek.approval_android.features.identity.presentation.screens
+package com.creditchek.approval_android.core.shared.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -24,8 +24,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.creditchek.approval_android.core.shared.components.ApprovalButton
-import com.creditchek.approval_android.core.shared.components.PoweredByCreditChek
 import com.creditchek.approval_android.core.theme.ApprovalCanvas
 import com.creditchek.approval_android.core.session.DevelopmentDecoration
 import com.creditchek.approval_android.core.theme.ApprovalSuccessDark
@@ -33,7 +31,6 @@ import com.creditchek.approval_android.core.theme.ApprovalSuccessRingDark
 import com.creditchek.approval_android.core.theme.ApprovalSuccessRingLight
 import com.creditchek.approval_android.core.theme.ApprovalTextPrimary
 import com.creditchek.approval_android.core.theme.ApprovalTheme
-import com.creditchek.approval_android.features.identity.presentation.components.ApprovalHeader
 
 
 @Composable

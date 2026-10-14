@@ -20,14 +20,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.creditchek.approval_android.core.shared.components.PoweredByCreditChek
-import com.creditchek.approval_android.core.theme.ApprovalBlue
 import com.creditchek.approval_android.core.theme.ApprovalCanvas
 import com.creditchek.approval_android.core.theme.ApprovalTextPrimary
 import com.creditchek.approval_android.core.theme.ApprovalTextSecondary
 import com.creditchek.approval_android.core.theme.ApprovalTheme
-import com.creditchek.approval_android.features.identity.presentation.components.ApprovalHeader
+import com.creditchek.approval_android.core.shared.components.ApprovalHeader
 import kotlinx.coroutines.delay
 import com.creditchek.approval_android.core.session.DevelopmentDecoration
+import com.creditchek.approval_android.core.theme.LocalApprovalThemeConfig
 import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
@@ -38,6 +38,8 @@ fun VerificationProcessingScreen(
     onFailure: () -> Unit = {},
     isDevelopment: Boolean = false
 ) {
+    val theme = LocalApprovalThemeConfig.current
+    
     // 1. Run Verification Coroutine on Mount
     LaunchedEffect(Unit) {
         val isPassed = try {
@@ -89,7 +91,7 @@ fun VerificationProcessingScreen(
             verticalArrangement = Arrangement.Center
         ) {
             CircularProgressIndicator(
-                color = ApprovalBlue,
+                color = theme.primaryColor,
                 strokeWidth = 3.dp,
                 modifier = Modifier.size(48.dp)
             )

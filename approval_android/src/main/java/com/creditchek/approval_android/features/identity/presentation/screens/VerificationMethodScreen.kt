@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.creditchek.approval_android.core.session.DevelopmentDecoration
 import com.creditchek.approval_android.core.shared.components.ApprovalButton
+import com.creditchek.approval_android.core.shared.components.BrandLogo
 import com.creditchek.approval_android.core.shared.components.PoweredByCreditChek
 import com.creditchek.approval_android.core.theme.*
 
@@ -58,15 +59,15 @@ fun VerificationMethodScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 12.dp),
+                .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onBack) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Back",
-                    tint = ApprovalBlue,
-                    modifier = Modifier.size(26.dp)
+                    tint = LocalApprovalThemeConfig.current.primaryColor,
+                    modifier = Modifier.size(24.dp)
                 )
             }
 
@@ -88,7 +89,14 @@ fun VerificationMethodScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.size(48.dp))
+            val theme = LocalApprovalThemeConfig.current
+            BrandLogo(
+                logoSource = theme.logoUrl,
+                contentDescription = theme.businessName,
+                modifier = Modifier
+                    .height(28.dp)
+                    .widthIn(max = 80.dp)
+            )
         }
 
         // 2. Main Content
@@ -127,7 +135,12 @@ fun VerificationMethodScreen(
                             .background(ApprovalField, shape = InputFieldShape)
                             .border(
                                 width = 1.dp,
-                                color = if (expanded) ApprovalBlue else ApprovalInputBorder,
+                                color = if (expanded)
+                                    LocalApprovalThemeConfig.current.primaryColor
+                                else
+                                    LocalApprovalThemeConfig.current.primaryColor.copy(
+                                        alpha = 0.12f
+                                    ),
                                 shape = InputFieldShape
                             )
                             .clickable { expanded = !expanded }
@@ -169,13 +182,13 @@ fun VerificationMethodScreen(
                                             text = doc.title,
                                             fontSize = 14.sp,
                                             fontWeight = if (doc == selectedDoc) FontWeight.SemiBold else FontWeight.Normal,
-                                            color = if (doc == selectedDoc) ApprovalBlue else ApprovalTextPrimary
+                                            color = if (doc == selectedDoc) LocalApprovalThemeConfig.current.primaryColor else ApprovalTextPrimary
                                         )
                                         if (doc == selectedDoc) {
                                             Icon(
                                                 imageVector = Icons.Default.Check,
                                                 contentDescription = "Selected",
-                                                tint = ApprovalBlue,
+                                                tint = LocalApprovalThemeConfig.current.primaryColor,
                                                 modifier = Modifier.size(18.dp)
                                             )
                                         }
@@ -198,10 +211,17 @@ fun VerificationMethodScreen(
                 onClick = { selectedDoc?.let { onProceed(it.key) } },
                 enabled = selectedDoc != null
             )
-
-            Spacer(modifier = Modifier.height(24.dp))
-            PoweredByCreditChek()
             Spacer(modifier = Modifier.height(16.dp))
+        }
+
+        // 3. Fixed Bottom Section
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            PoweredByCreditChek()
         }
     }
 }

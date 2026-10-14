@@ -8,10 +8,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.creditchek.approval_android.core.theme.ApprovalBlue
 import com.creditchek.approval_android.core.theme.ApprovalHint
-import com.creditchek.approval_android.core.theme.ApprovalMutedButton
-import com.creditchek.approval_android.core.theme.DynamicThemeConfig
+import com.creditchek.approval_android.core.theme.LocalApprovalThemeConfig
 import com.creditchek.approval_android.core.theme.PrimaryButtonShape
 
 @Composable
@@ -22,15 +20,26 @@ fun ApprovalButton(
     isSecondary: Boolean = false,
     isLoading: Boolean = false,
     enabled: Boolean = true,
-    themeConfig: DynamicThemeConfig? = null
 ) {
+    val localTheme = LocalApprovalThemeConfig.current
+    val primaryColor = localTheme.primaryColor
+
+    val containerColor = if (isSecondary) {
+        primaryColor.copy(alpha = 0.12f)
+    } else {
+        primaryColor
+    }
+
+    val contentColor = if (isSecondary) primaryColor else Color.White
+
     Button(
         onClick = onClick,
         enabled = enabled && !isLoading,
         shape = PrimaryButtonShape,
         colors = ButtonDefaults.buttonColors(
-            containerColor = if (isSecondary) ApprovalMutedButton else themeConfig?.primaryColor ?: ApprovalBlue,
-            contentColor = if (isSecondary) ApprovalBlue else Color.White,
+
+            containerColor = containerColor,
+            contentColor = contentColor,
             disabledContainerColor = Color(0xFFE2E8F0),
             disabledContentColor = ApprovalHint
         ),
@@ -41,7 +50,7 @@ fun ApprovalButton(
     ) {
         if (isLoading) {
             CircularProgressIndicator(
-                color = if (isSecondary) ApprovalBlue else Color.White,
+                color = if (isSecondary) localTheme.primaryColor else Color.White,
                 modifier = Modifier.size(20.dp),
                 strokeWidth = 2.dp
             )

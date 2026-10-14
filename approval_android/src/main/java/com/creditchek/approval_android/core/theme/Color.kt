@@ -39,7 +39,3 @@ val ApprovalErrorText = Color(0xFF8F1025)
 val ApprovalSuccessRingLight = Color(0xFF61E49D)
 val ApprovalSuccessRingDark = Color(0xFF0AB56D)
 val ApprovalSuccessDark = Color(0xFF008550)
-
-
-// Optional: Face oval default background
-val DefaultPreviewColor = Color(0xFFE6ECFC)
