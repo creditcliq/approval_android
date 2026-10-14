@@ -7,7 +7,7 @@ import com.creditchek.approval_android.features.identity.data.models.Services
 /**
  * Holds in-memory session credentials and user details during the verification lifecycle.
  */
-data class IdentitySessionContext(
+data class SharedSessionContext(
     // 1. Session and API keys returned from public key validation
     val publicKey: String = "",
     val secretKey: String = "",

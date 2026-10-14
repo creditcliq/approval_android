@@ -51,7 +51,6 @@ import com.creditchek.approval_android.core.theme.DynamicThemeConfig
 import com.creditchek.approval_android.core.theme.parseHexColor
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.security.SecureRandom
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -881,12 +880,10 @@ fun ApprovalFlowNavigator(
                         ApprovalButton(
                             text = "Try Again",
                             onClick = { mismatchDialogMessage = null },
-                            themeConfig = themeConfig
                         )
                         ApprovalButton(
                             isSecondary = true,
                             text = "Dismiss",
-                            themeConfig = themeConfig,
                             onClick = {
                                 onFinishWithResult(
                                     SessionResult.Error(
