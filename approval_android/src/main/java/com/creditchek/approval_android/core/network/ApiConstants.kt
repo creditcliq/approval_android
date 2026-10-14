@@ -4,7 +4,7 @@ import com.creditchek.approval_android.core.session.ApprovalEnv
 
 object ApiConstants {
 
-    const val PROD_BASE_URL = "https://dev.creditchek.africa/v1/"
+    const val PROD_BASE_URL = "https://api.creditchek.africa/v1/"
 
     // Endpoints
     const val WIDGET_CONFIG = "auth/sdk-setup"
