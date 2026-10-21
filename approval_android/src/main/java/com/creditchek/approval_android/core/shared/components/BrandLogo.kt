@@ -1,9 +1,11 @@
 package com.creditchek.approval_android.core.shared.components
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import coil.compose.AsyncImage
@@ -14,7 +16,7 @@ import com.creditchek.approval_android.core.engines.BitmapUtils.decodeBase64ToBi
 fun BrandLogo(
     logoSource: String?,
     contentDescription: String? = "Brand logo",
-    modifier: Modifier = Modifier
+    modifier: Modifier
 ) {
     val fallBackPainter = painterResource(id = R.drawable.ic_logo)
     val trimmedLogo = logoSource?.trim()
@@ -25,7 +27,7 @@ fun BrandLogo(
                 painter = fallBackPainter,
                 contentDescription = contentDescription,
                 contentScale = ContentScale.Fit,
-                modifier = modifier
+                modifier = modifier.clip(shape = RoundedCornerShape(8))
             )
         }
 
@@ -36,7 +38,7 @@ fun BrandLogo(
                 error = fallBackPainter,
                 contentDescription = contentDescription,
                 contentScale = ContentScale.Fit,
-                modifier = modifier
+                modifier = modifier.clip(shape = RoundedCornerShape(8))
             )
         }
 
@@ -47,14 +49,14 @@ fun BrandLogo(
                     bitmap = bitmap,
                     contentDescription = contentDescription,
                     contentScale = ContentScale.Fit,
-                    modifier = modifier
+                    modifier = modifier.clip(shape = RoundedCornerShape(8))
                 )
             } else {
                 Image(
                     painter = fallBackPainter,
                     contentDescription = contentDescription,
                     contentScale = ContentScale.Fit,
-                    modifier = modifier
+                    modifier = modifier.clip(shape = RoundedCornerShape(8))
                 )
             }
         }
@@ -64,7 +66,7 @@ fun BrandLogo(
                 painter = fallBackPainter,
                 contentDescription = contentDescription,
                 contentScale = ContentScale.Fit,
-                modifier = modifier
+                modifier = modifier.clip(shape = RoundedCornerShape(8))
             )
         }
     }

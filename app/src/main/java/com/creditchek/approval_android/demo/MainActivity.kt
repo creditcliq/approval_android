@@ -33,6 +33,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.creditchek.approval_android.CreditChekApproval
+import com.creditchek.approval_android.core.session.AUserData
 import com.creditchek.approval_android.core.session.ApprovalConfig
 import com.creditchek.approval_android.core.session.SessionResult
 
@@ -119,9 +120,9 @@ fun DemoAppScreen() {
                     CreditChekApproval.start(
                         context = context,
                         config = ApprovalConfig(
-                            publicKey = "vy6LZWI/l/pOc868z8LAgEBCdvsSomPev2TxLqIdlNZIueMM0Agl8G88zxyE65LN",
-                            sessionId = "c2821c0c-cf20-4539-8be0-ad363e78fc28",
-                            widgetId = "6a1d5a99a5746db9fe0cfcf0"
+                            publicKey = "your-public-key",
+                            sessionId = "sessionId",
+                            widgetId = "widget-id-from-dashboard",
                         )
                     ) { result ->
                         when (result) {

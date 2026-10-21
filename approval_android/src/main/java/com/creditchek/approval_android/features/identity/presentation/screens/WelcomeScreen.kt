@@ -14,14 +14,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.paint
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.creditchek.approval_android.core.network.ApiConstants
 import com.creditchek.approval_android.core.shared.components.ApprovalButton
 import com.creditchek.approval_android.core.shared.components.DashedBorderCard
 import com.creditchek.approval_android.core.shared.components.PoweredByCreditChek
@@ -145,11 +149,25 @@ fun WelcomeScreen(
 
             val legalText = buildAnnotatedString {
                 append("Your privacy and security are our top priorities. By proceeding, you agree to our ")
-                withStyle(SpanStyle(color = theme.primaryColor, fontWeight = FontWeight.SemiBold)) {
+                withLink(
+                    LinkAnnotation.Url(
+                        url = ApiConstants.PRIVACY_POLICY,
+                        styles = TextLinkStyles(
+                            style = SpanStyle(color = theme.primaryColor, fontWeight = FontWeight.SemiBold)
+                        )
+                    )
+                ) {
                     append("Privacy Policy")
                 }
                 append(" and ")
-                withStyle(SpanStyle(color = theme.primaryColor, fontWeight = FontWeight.SemiBold)) {
+                withLink(
+                    LinkAnnotation.Url(
+                        url = ApiConstants.TERMS_AND_CONDITIONS,
+                        styles = TextLinkStyles(
+                            style = SpanStyle(color = theme.primaryColor, fontWeight = FontWeight.SemiBold)
+                        )
+                    )
+                ) {
                     append("Terms & Conditions")
                 }
                 append(".")

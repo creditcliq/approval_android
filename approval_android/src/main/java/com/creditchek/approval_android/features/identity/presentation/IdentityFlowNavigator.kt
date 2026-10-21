@@ -479,23 +479,20 @@ fun IdentityFlowNavigator(
                 },
                 confirmButton = {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+
                         ApprovalButton(
-                            text = "Try Again",
-                            onClick = { mismatchDialogMessage = null },
+                            text = "Dismiss",
+                            onClick = {
+                                val message = mismatchDialogMessage ?: "Details mismatch"
+                                mismatchDialogMessage = null
+                                onComplete(
+                                    SessionResult.Error(
+                                        message = message,
+                                        code = "400 Bad request"
+                                    )
+                                )
+                            }
                         )
-//                        ApprovalButton(
-//                            isSecondary = true,
-//                            text = "Dismiss",
-//                            onClick = {
-////                                onComplete(
-////                                    SessionResult.Error(
-////                                        message = mismatchDialogMessage ?: "BVN details mismatch",
-////                                        code = "400 Bad request"
-////                                    )
-////                                )
-//                                mismatchDialogMessage = null
-//                            }
-//                        )
                     }
                 },
                 shape = RoundedCornerShape(16.dp),

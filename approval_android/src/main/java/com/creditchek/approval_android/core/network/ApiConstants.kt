@@ -17,6 +17,12 @@ object ApiConstants {
     const val LIVENESS_HEALTH = "liveness/health"
     const val LIVENESS_VERIFY_CHALLENGE = "liveness/verify-challenge"
 
+    // Legal URLs
+    const val PRIVACY_POLICY = "https://www.creditchek.africa/privacy-policy"
+    const val TERMS_AND_CONDITIONS = "https://www.creditchek.africa/terms-of-use"
+    const val PRIVACY_POLICY_URL = PRIVACY_POLICY
+    const val TERMS_AND_CONDITIONS_URL = TERMS_AND_CONDITIONS
+
     // Timeouts
     const val CONNECT_TIMEOUT_SECONDS = 15L
     const val READ_TIMEOUT_SECONDS = 60L

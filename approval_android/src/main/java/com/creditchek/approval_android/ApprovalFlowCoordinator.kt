@@ -59,12 +59,19 @@ fun ApprovalCoordinator(
         }
     }
 
-    BackHandler {
-        if (currentModuleIndex > 0) {
-            currentModuleIndex -= 1 //Step back to previous module
-        } else {
-            onFinishWithResult(SessionResult.Cancelled)
+    fun handleModuleResult(result: SessionResult) {
+        when (result) {
+            is SessionResult.Success -> onModuleFinished()
+            is SessionResult.Error, SessionResult.Cancelled -> onFinishWithResult(result)
         }
+    }
+
+    fun handleCancel() {
+        onFinishWithResult(SessionResult.Cancelled)
+    }
+
+    BackHandler {
+        handleCancel()
     }
 
 
@@ -179,16 +186,13 @@ fun ApprovalCoordinator(
                         context = sharedSessionContext,
                         onContextUpdate = { sharedSessionContext = it },
                         onThemeLoaded = { themeConfig = it },
-                        onComplete = { value ->
-                            onModuleFinished()
+                        onComplete = { result ->
+                            handleModuleResult(result)
                         },
                         onError = { msg ->
                             onFinishWithResult(SessionResult.Error("IDENTITY_ERROR", message = msg))
                         },
-                        onCancel = {
-                            if (currentModuleIndex > 0) currentModuleIndex -= 1
-                            else onFinishWithResult(SessionResult.Cancelled)
-                        }
+                        onCancel = { handleCancel() }
                     )
                 }
 
@@ -199,8 +203,8 @@ fun ApprovalCoordinator(
                         context = sharedSessionContext,
                         onContextUpdate = { sharedSessionContext = it },
                         onThemeLoaded = { themeConfig = it },
-                        onComplete = { value ->
-                            onModuleFinished()
+                        onComplete = { result ->
+                            handleModuleResult(result)
                         },
                         onError = { msg ->
                             onFinishWithResult(
@@ -210,10 +214,7 @@ fun ApprovalCoordinator(
                                 )
                             )
                         },
-                        onCancel = {
-                            if (currentModuleIndex > 0) currentModuleIndex -= 1
-                            else onFinishWithResult(SessionResult.Cancelled)
-                        }
+                        onCancel = { handleCancel() }
                     )
                 }
 
@@ -223,16 +224,13 @@ fun ApprovalCoordinator(
                         context = sharedSessionContext,
 
                         onThemeLoaded = { themeConfig = it },
-                        onComplete = { value ->
-                            onModuleFinished()
+                        onComplete = { result ->
+                            handleModuleResult(result)
                         },
                         onError = { msg ->
                             onFinishWithResult(SessionResult.Error("INCOME_ERROR", message = msg))
                         },
-                        onCancel = {
-                            if (currentModuleIndex > 0) currentModuleIndex -= 1
-                            else onFinishWithResult(SessionResult.Cancelled)
-                        }
+                        onCancel = { handleCancel() }
                     )
                 }
 
@@ -241,16 +239,13 @@ fun ApprovalCoordinator(
                         config = config,
                         context = sharedSessionContext,
                         onThemeLoaded = { themeConfig = it },
-                        onComplete = { value ->
-                            onModuleFinished()
+                        onComplete = { result ->
+                            handleModuleResult(result)
                         },
                         onError = { msg ->
                             onFinishWithResult(SessionResult.Error("CREDIT_ERROR", message = msg))
                         },
-                        onCancel = {
-                            if (currentModuleIndex > 0) currentModuleIndex -= 1
-                            else onFinishWithResult(SessionResult.Cancelled)
-                        }
+                        onCancel = { handleCancel() }
                     )
 
                 }
@@ -260,16 +255,13 @@ fun ApprovalCoordinator(
                         config = config,
                         context = sharedSessionContext,
                         onThemeLoaded = { themeConfig = it },
-                        onComplete = { value ->
-                            onModuleFinished()
+                        onComplete = { result ->
+                            handleModuleResult(result)
                         },
                         onError = { msg ->
                             onFinishWithResult(SessionResult.Error("RECOVA_ERROR", message = msg))
                         },
-                        onCancel = {
-                            if (currentModuleIndex > 0) currentModuleIndex -= 1
-                            else onFinishWithResult(SessionResult.Cancelled)
-                        }
+                        onCancel = { handleCancel() }
                     )
 
                 }
